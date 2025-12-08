@@ -136,7 +136,10 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3000/api/matriculas';
+        // Detectar automáticamente la URL base según el entorno
+        const API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000/api/matriculas'
+            : `${window.location.origin}/api/matriculas`;
 
         // Manejo de pestañas
         document.querySelectorAll('.tab-btn').forEach(btn => {
