@@ -26,7 +26,7 @@
         </div>
 
         <!-- Tarjetas de Totales -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Total Inscritos -->
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between">
@@ -71,6 +71,21 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Pendientes sin Deuda -->
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-amber-100 text-sm font-medium mb-1">Pendientes sin Deuda</p>
+                        <p class="text-4xl font-bold" id="totalPendientesSinDeuda">0</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Pestañas de Navegación -->
@@ -87,6 +102,9 @@
                 </button>
                 <button class="tab-btn px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="completo">
                     Vista Completa
+                </button>
+                <button class="tab-btn px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="pendientes-sin-deuda">
+                    Pendientes sin Deuda
                 </button>
             </div>
 
@@ -131,6 +149,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Tab: Pendientes sin Deuda -->
+                <div id="tab-pendientes-sin-deuda" class="tab-content hidden">
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-amber-800">Estudiantes sin deuda pendientes de habilitación</h3>
+                                <p class="text-sm text-amber-700 mt-1">Estos estudiantes ya completaron sus pagos pero aún no han sido habilitados en el sistema.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pendientesSinDeudaContainer" class="space-y-4">
+                        <div class="text-center py-8">
+                            <div class="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto"></div>
+                            <p class="mt-2 text-gray-500">Cargando datos...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -166,15 +207,100 @@
             try {
                 const response = await fetch(`${API_BASE}/totales`);
                 const data = await response.json();
-                
+
                 document.getElementById('totalInscritos').textContent = data.total_inscritos || 0;
                 document.getElementById('totalHabilitados').textContent = data.total_habilitados || 0;
                 document.getElementById('totalSincronizados').textContent = data.total_sincronizados || 0;
-                
+
                 updateTimestamp();
             } catch (error) {
                 console.error('Error:', error);
             }
+        }
+
+        async function fetchPendientesSinDeuda() {
+            try {
+                const response = await fetch(`${API_BASE}/pendientes-sin-deuda`);
+                const data = await response.json();
+
+                // Actualizar tarjeta de total
+                document.getElementById('totalPendientesSinDeuda').textContent = data.total_general || 0;
+
+                // Renderizar tabla
+                renderPendientesSinDeuda(data.data);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('pendientesSinDeudaContainer').innerHTML = '<p class="text-center text-red-500">Error al cargar datos</p>';
+            }
+        }
+
+        function renderPendientesSinDeuda(data) {
+            const container = document.getElementById('pendientesSinDeudaContainer');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-8"><p class="text-green-600 font-semibold">¡Excelente! No hay estudiantes pendientes sin deuda.</p></div>';
+                return;
+            }
+
+            const grouped = {};
+            data.forEach(item => {
+                const key = `${item.sede}|${item.area}|${item.turno}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        sede: item.sede,
+                        area: item.area,
+                        turno: item.turno,
+                        grupos: []
+                    };
+                }
+                grouped[key].grupos.push(item);
+            });
+
+            let html = '<div class="space-y-4">';
+            Object.values(grouped).forEach(group => {
+                const totalGrupo = group.grupos.reduce((sum, g) => sum + g.total_no_habilitados_sin_deuda, 0);
+
+                html += `
+                    <div class="bg-white rounded-xl border-2 border-amber-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 border-b border-amber-200">
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm font-semibold text-amber-900">${group.sede} > ${group.area} > ${group.turno}</p>
+                                <span class="px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-bold">${totalGrupo} estudiantes</span>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-amber-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left font-semibold text-gray-700">Grupo</th>
+                                        <th class="px-4 py-2 text-center font-semibold text-gray-700">Estudiantes Pendientes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                group.grupos.forEach((grupo, idx) => {
+                    const bgClass = idx % 2 === 0 ? 'bg-white' : 'bg-amber-50';
+                    html += `
+                        <tr class="${bgClass}">
+                            <td class="px-4 py-3 font-medium text-gray-800">${grupo.grupo}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">
+                                    ${grupo.total_no_habilitados_sin_deuda}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         async function fetchPorSede() {
@@ -417,15 +543,16 @@
         async function loadAllData() {
             const btnSvg = document.querySelector('#refreshBtn svg');
             btnSvg.classList.add('animate-spin');
-            
+
             await Promise.all([
                 fetchTotales(),
                 fetchPorSede(),
                 fetchSedeArea(),
                 fetchSedeAreaTurno(),
-                fetchCompleto()
+                fetchCompleto(),
+                fetchPendientesSinDeuda()
             ]);
-            
+
             btnSvg.classList.remove('animate-spin');
         }
 

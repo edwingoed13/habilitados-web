@@ -347,6 +347,93 @@ app.get('/api/matriculas/completo', async (req, res) => {
   }
 });
 
+// 6. Estudiantes sin deuda pero no habilitados
+app.get('/api/matriculas/pendientes-sin-deuda', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        s.denominacion AS sede,
+        a.denominacion AS area,
+        t.denominacion AS turno,
+        g.denominacion AS grupo,
+        COUNT(*) AS total_no_habilitados_sin_deuda
+      FROM (
+        SELECT
+          e.id,
+          s.id AS sede_id,
+          a.id AS area_id,
+          t.id AS turno_id,
+          g.id AS grupo_id
+        FROM
+          estudiantes e
+          INNER JOIN matriculas m ON e.id = m.estudiantes_id AND m.periodos_id = 1
+          INNER JOIN tarifa_estudiantes te ON e.id = te.estudiantes_id
+          INNER JOIN grupo_aulas ga ON m.grupo_aulas_id = ga.id
+          INNER JOIN grupos g ON ga.grupos_id = g.id
+          INNER JOIN areas a ON ga.areas_id = a.id
+          INNER JOIN turnos t ON ga.turnos_id = t.id
+          INNER JOIN aulas au ON ga.aulas_id = au.id
+          INNER JOIN locales l ON au.locales_id = l.id
+          INNER JOIN sedes s ON l.sedes_id = s.id
+        WHERE
+          m.habilitado = '0'
+        GROUP BY
+          e.id,
+          s.id,
+          a.id,
+          t.id,
+          g.id
+        HAVING
+          SUM(te.monto - te.pagado) <= 0
+      ) AS estudiantes_sin_deuda
+      INNER JOIN sedes s ON estudiantes_sin_deuda.sede_id = s.id
+      INNER JOIN areas a ON estudiantes_sin_deuda.area_id = a.id
+      INNER JOIN turnos t ON estudiantes_sin_deuda.turno_id = t.id
+      INNER JOIN grupos g ON estudiantes_sin_deuda.grupo_id = g.id
+      GROUP BY
+        s.id,
+        s.denominacion,
+        a.id,
+        a.denominacion,
+        t.id,
+        t.denominacion,
+        g.id,
+        g.denominacion
+      ORDER BY
+        s.denominacion,
+        a.denominacion,
+        t.denominacion,
+        g.denominacion
+    `);
+
+    connection.release();
+
+    // Convertir valores a números
+    const data = result.map(row => ({
+      sede: row.sede,
+      area: row.area,
+      turno: row.turno,
+      grupo: row.grupo,
+      total_no_habilitados_sin_deuda: parseInt(row.total_no_habilitados_sin_deuda) || 0
+    }));
+
+    // Calcular total general
+    const total_general = data.reduce((sum, row) => sum + row.total_no_habilitados_sin_deuda, 0);
+
+    res.json({
+      data,
+      total_general,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al obtener pendientes sin deuda', message: error.message });
+  }
+});
+
 // Endpoint de salud
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
