@@ -439,7 +439,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
-});
+// Iniciar servidor (solo en desarrollo local)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`✅ Servidor corriendo en puerto ${PORT}`);
+  });
+}
+
+// Exportar para Vercel
+module.exports = app;
