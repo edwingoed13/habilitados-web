@@ -176,6 +176,35 @@
         </div>
     </div>
 
+    <!-- Modal para detalle de estudiantes -->
+    <div id="modalDetalle" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Header del modal -->
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold text-white" id="modalTitle">Detalle de Estudiantes</h3>
+                    <p class="text-amber-100 text-sm" id="modalSubtitle"></p>
+                </div>
+                <button onclick="cerrarModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Contenido del modal -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <div id="modalContent" class="space-y-4">
+                    <!-- Spinner de carga -->
+                    <div class="text-center py-8">
+                        <div class="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full mx-auto"></div>
+                        <p class="mt-2 text-gray-500">Cargando estudiantes...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Detectar automáticamente la URL base según el entorno
         const API_BASE = window.location.hostname === 'localhost'
@@ -273,6 +302,7 @@
                                     <tr>
                                         <th class="px-4 py-2 text-left font-semibold text-gray-700">Grupo</th>
                                         <th class="px-4 py-2 text-center font-semibold text-gray-700">Estudiantes Pendientes</th>
+                                        <th class="px-4 py-2 text-center font-semibold text-gray-700">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -288,6 +318,18 @@
                                     ${grupo.total_no_habilitados_sin_deuda}
                                 </span>
                             </td>
+                            <td class="px-4 py-3 text-center">
+                                <button
+                                    onclick="verDetalleEstudiantes('${group.sede}', '${group.area}', '${group.turno}', '${grupo.grupo}')"
+                                    class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-2"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    Ver Detalle
+                                </button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -302,6 +344,118 @@
             html += '</div>';
             container.innerHTML = html;
         }
+
+        // Función para abrir el modal con detalle de estudiantes
+        async function verDetalleEstudiantes(sede, area, turno, grupo) {
+            const modal = document.getElementById('modalDetalle');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalSubtitle = document.getElementById('modalSubtitle');
+            const modalContent = document.getElementById('modalContent');
+
+            // Mostrar modal
+            modal.classList.remove('hidden');
+
+            // Actualizar título
+            modalTitle.textContent = `Estudiantes Pendientes sin Deuda`;
+            modalSubtitle.textContent = `${sede} > ${area} > ${turno} > ${grupo}`;
+
+            // Mostrar spinner
+            modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full mx-auto"></div>
+                    <p class="mt-2 text-gray-500">Cargando estudiantes...</p>
+                </div>
+            `;
+
+            try {
+                const params = new URLSearchParams({
+                    sede: sede,
+                    area: area,
+                    turno: turno,
+                    grupo: grupo
+                });
+
+                const response = await fetch(`${API_BASE}/pendientes-sin-deuda/detalle?${params}`);
+                const data = await response.json();
+
+                if (data.estudiantes && data.estudiantes.length > 0) {
+                    let html = `
+                        <div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p class="text-sm text-amber-800">
+                                <strong>Total de estudiantes:</strong> ${data.total}
+                            </p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-100 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-700">N°</th>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-700">DNI</th>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-700">Apellidos y Nombres</th>
+                                        <th class="px-4 py-3 text-right font-semibold text-gray-700">Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    data.estudiantes.forEach((est, idx) => {
+                        const bgClass = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                        const saldo = est.deuda_total;
+                        const saldoColor = saldo < 0 ? 'text-green-600' : 'text-gray-600';
+                        const saldoTexto = saldo < 0 ? `S/ ${Math.abs(saldo).toFixed(2)} (a favor)` : `S/ ${saldo.toFixed(2)}`;
+
+                        html += `
+                            <tr class="${bgClass} hover:bg-amber-50 transition-colors">
+                                <td class="px-4 py-3 text-gray-600">${idx + 1}</td>
+                                <td class="px-4 py-3 font-mono text-gray-800">${est.dni}</td>
+                                <td class="px-4 py-3 font-medium text-gray-800">${est.apellidos_nombres}</td>
+                                <td class="px-4 py-3 text-right font-semibold ${saldoColor}">${saldoTexto}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    modalContent.innerHTML = html;
+                } else {
+                    modalContent.innerHTML = `
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p class="text-gray-500">No se encontraron estudiantes</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-red-600 font-semibold">Error al cargar los datos</p>
+                        <p class="text-gray-500 text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Función para cerrar el modal
+        function cerrarModal() {
+            document.getElementById('modalDetalle').classList.add('hidden');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalDetalle').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
 
         async function fetchPorSede() {
             try {

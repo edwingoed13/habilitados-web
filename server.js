@@ -347,7 +347,98 @@ app.get('/api/matriculas/completo', async (req, res) => {
   }
 });
 
-// 6. Estudiantes sin deuda pero no habilitados
+// 6. Detalle de estudiantes pendientes sin deuda por grupo
+app.get('/api/matriculas/pendientes-sin-deuda/detalle', async (req, res) => {
+  try {
+    const { sede, area, turno, grupo } = req.query;
+
+    if (!sede || !area || !turno || !grupo) {
+      return res.status(400).json({
+        error: 'Parámetros requeridos: sede, area, turno, grupo'
+      });
+    }
+
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        e.nro_documento AS dni,
+        CONCAT(e.paterno, ' ', e.materno, ' ', e.nombres) AS apellidos_nombres,
+        s.denominacion AS sede,
+        a.denominacion AS area,
+        t.denominacion AS turno,
+        g.denominacion AS grupo,
+        SUM(te.monto) AS total_tarifa,
+        SUM(te.pagado) AS total_pagado,
+        SUM(te.monto - te.pagado) AS deuda_total
+      FROM
+        estudiantes e
+        INNER JOIN inscripciones i ON e.id = i.estudiantes_id
+        INNER JOIN matriculas m ON e.id = m.estudiantes_id AND m.periodos_id = 1
+        INNER JOIN tarifa_estudiantes te ON e.id = te.estudiantes_id
+        INNER JOIN grupo_aulas ga ON m.grupo_aulas_id = ga.id
+        INNER JOIN grupos g ON ga.grupos_id = g.id
+        INNER JOIN areas a ON ga.areas_id = a.id
+        INNER JOIN turnos t ON ga.turnos_id = t.id
+        INNER JOIN aulas au ON ga.aulas_id = au.id
+        INNER JOIN locales l ON au.locales_id = l.id
+        INNER JOIN sedes s ON l.sedes_id = s.id
+      WHERE
+        i.periodos_id = 1
+        AND m.habilitado = '0'
+        AND s.denominacion = ?
+        AND a.denominacion = ?
+        AND t.denominacion = ?
+        AND g.denominacion = ?
+      GROUP BY
+        e.id,
+        e.nro_documento,
+        e.paterno,
+        e.materno,
+        e.nombres,
+        s.denominacion,
+        a.denominacion,
+        t.denominacion,
+        g.denominacion
+      HAVING
+        SUM(te.monto - te.pagado) <= 0
+      ORDER BY
+        e.paterno,
+        e.materno,
+        e.nombres
+    `, [sede, area, turno, grupo]);
+
+    connection.release();
+
+    // Convertir valores a números
+    const estudiantes = result.map(row => ({
+      dni: row.dni,
+      apellidos_nombres: row.apellidos_nombres,
+      sede: row.sede,
+      area: row.area,
+      turno: row.turno,
+      grupo: row.grupo,
+      total_tarifa: parseFloat(row.total_tarifa) || 0,
+      total_pagado: parseFloat(row.total_pagado) || 0,
+      deuda_total: parseFloat(row.deuda_total) || 0
+    }));
+
+    res.json({
+      estudiantes,
+      total: estudiantes.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: 'Error al obtener detalle de estudiantes',
+      message: error.message
+    });
+  }
+});
+
+// 7. Estudiantes sin deuda pero no habilitados
 app.get('/api/matriculas/pendientes-sin-deuda', async (req, res) => {
   try {
     const connection = await pool.getConnection();
