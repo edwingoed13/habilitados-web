@@ -525,6 +525,79 @@ app.get('/api/matriculas/pendientes-sin-deuda', async (req, res) => {
   }
 });
 
+// 8. Estudiantes habilitados con deuda pendiente (ALERTA)
+app.get('/api/matriculas/habilitados-con-deuda', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        e.nro_documento as dni,
+        CONCAT(e.paterno, ' ', e.materno, ' ', e.nombres) as apellidos_nombres,
+        s.denominacion as sede,
+        a.denominacion as area,
+        t.denominacion as turno,
+        g.denominacion as grupo,
+        SUM(te.monto - te.pagado) as deuda_total
+      FROM estudiantes e
+      INNER JOIN inscripciones i ON e.id = i.estudiantes_id
+      INNER JOIN matriculas m ON e.id = m.estudiantes_id AND m.periodos_id = 1
+      INNER JOIN tarifa_estudiantes te ON e.id = te.estudiantes_id
+      INNER JOIN sedes s ON i.sedes_id = s.id
+      INNER JOIN grupo_aulas ga ON m.grupo_aulas_id = ga.id
+      INNER JOIN grupos g ON ga.grupos_id = g.id
+      INNER JOIN areas a ON ga.areas_id = a.id
+      INNER JOIN turnos t ON ga.turnos_id = t.id
+      WHERE
+        i.periodos_id = 1
+        AND m.habilitado = '1'
+      GROUP BY
+        e.id,
+        e.nro_documento,
+        e.paterno,
+        e.materno,
+        e.nombres,
+        s.denominacion,
+        a.denominacion,
+        t.denominacion,
+        g.denominacion
+      HAVING
+        SUM(te.monto - te.pagado) > 0
+      ORDER BY
+        SUM(te.monto - te.pagado) DESC,
+        e.paterno,
+        e.materno,
+        e.nombres
+    `);
+
+    connection.release();
+
+    // Convertir valores a números
+    const estudiantes = result.map(row => ({
+      dni: row.dni,
+      apellidos_nombres: row.apellidos_nombres,
+      sede: row.sede,
+      area: row.area,
+      turno: row.turno,
+      grupo: row.grupo,
+      deuda_total: parseFloat(row.deuda_total) || 0
+    }));
+
+    res.json({
+      estudiantes,
+      total: estudiantes.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: 'Error al obtener habilitados con deuda',
+      message: error.message
+    });
+  }
+});
+
 // Endpoint de salud
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

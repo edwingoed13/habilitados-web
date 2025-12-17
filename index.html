@@ -88,6 +88,64 @@
             </div>
         </div>
 
+        <!-- Alerta de Estudiantes Habilitados con Deuda -->
+        <div id="alertaHabilitadosConDeuda" class="hidden">
+            <div class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-md overflow-hidden">
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-bold text-red-800">
+                                    ⚠️ Alerta: Estudiantes Habilitados con Deuda Pendiente
+                                </h3>
+                                <button id="toggleAlertaDetalle" class="text-red-700 hover:text-red-900 font-semibold text-sm">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span id="contadorHabilitadosConDeuda">0</span> estudiantes
+                                        <svg id="iconoToggle" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                            <p class="text-sm text-red-700 mt-1">
+                                Estos estudiantes fueron habilitados pero aún tienen deuda pendiente de pago. Revise la lista para tomar acción.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido colapsable -->
+                <div id="detalleHabilitadosConDeuda" class="hidden bg-white border-t border-red-200">
+                    <div class="p-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-red-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">N°</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">DNI</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">Apellidos y Nombres</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">Sede</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">Área</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">Turno</th>
+                                        <th class="px-3 py-2 text-left font-semibold text-gray-700">Grupo</th>
+                                        <th class="px-3 py-2 text-right font-semibold text-gray-700">Deuda</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaHabilitadosConDeuda">
+                                    <!-- Se llenará dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Pestañas de Navegación -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div class="flex overflow-x-auto border-b border-gray-200">
@@ -694,6 +752,57 @@
             document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-PE');
         }
 
+        // Función para cargar habilitados con deuda (ALERTA)
+        async function fetchHabilitadosConDeuda() {
+            try {
+                const response = await fetch(`${API_BASE}/habilitados-con-deuda`);
+                const data = await response.json();
+
+                const alertaDiv = document.getElementById('alertaHabilitadosConDeuda');
+                const contador = document.getElementById('contadorHabilitadosConDeuda');
+                const tabla = document.getElementById('tablaHabilitadosConDeuda');
+
+                if (data.estudiantes && data.estudiantes.length > 0) {
+                    // Mostrar alerta
+                    alertaDiv.classList.remove('hidden');
+                    contador.textContent = data.total;
+
+                    // Llenar tabla
+                    let html = '';
+                    data.estudiantes.forEach((est, idx) => {
+                        const bgClass = idx % 2 === 0 ? 'bg-white' : 'bg-red-50';
+                        html += `
+                            <tr class="${bgClass} hover:bg-red-100 transition-colors">
+                                <td class="px-3 py-2 text-gray-600">${idx + 1}</td>
+                                <td class="px-3 py-2 font-mono text-gray-800">${est.dni}</td>
+                                <td class="px-3 py-2 font-medium text-gray-800">${est.apellidos_nombres}</td>
+                                <td class="px-3 py-2 text-gray-700">${est.sede}</td>
+                                <td class="px-3 py-2 text-gray-700">${est.area}</td>
+                                <td class="px-3 py-2 text-gray-700">${est.turno}</td>
+                                <td class="px-3 py-2 text-gray-700">${est.grupo}</td>
+                                <td class="px-3 py-2 text-right font-bold text-red-600">S/ ${est.deuda_total.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    tabla.innerHTML = html;
+                } else {
+                    // Ocultar alerta si no hay estudiantes con deuda
+                    alertaDiv.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Toggle para mostrar/ocultar detalle de la alerta
+        document.getElementById('toggleAlertaDetalle')?.addEventListener('click', function() {
+            const detalle = document.getElementById('detalleHabilitadosConDeuda');
+            const icono = document.getElementById('iconoToggle');
+
+            detalle.classList.toggle('hidden');
+            icono.classList.toggle('rotate-180');
+        });
+
         async function loadAllData() {
             const btnSvg = document.querySelector('#refreshBtn svg');
             btnSvg.classList.add('animate-spin');
@@ -704,7 +813,8 @@
                 fetchSedeArea(),
                 fetchSedeAreaTurno(),
                 fetchCompleto(),
-                fetchPendientesSinDeuda()
+                fetchPendientesSinDeuda(),
+                fetchHabilitadosConDeuda()
             ]);
 
             btnSvg.classList.remove('animate-spin');
