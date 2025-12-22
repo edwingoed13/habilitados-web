@@ -149,7 +149,52 @@ app.get('/api/matriculas/totales', async (req, res) => {
   }
 });
 
-// 2. Desglose por Sede
+// 2. Desglose por Área
+app.get('/api/matriculas/por-area', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        a.denominacion AS area,
+        COUNT(DISTINCT m.estudiantes_id) AS total_estudiantes,
+        SUM(CASE WHEN m.habilitado = '1' AND m.habilitado_estado = '1' THEN 1 ELSE 0 END) AS total_sincronizados,
+        ROUND((SUM(CASE WHEN m.habilitado = '1' AND m.habilitado_estado = '1' THEN 1 ELSE 0 END) * 100.0) / COUNT(DISTINCT m.estudiantes_id), 2) AS porcentaje_sincronizados
+      FROM
+        matriculas m
+        INNER JOIN grupo_aulas ga ON m.grupo_aulas_id = ga.id
+        INNER JOIN areas a ON ga.areas_id = a.id
+      WHERE
+        m.periodos_id = 1
+      GROUP BY
+        a.id, a.denominacion
+      ORDER BY
+        total_estudiantes DESC
+    `);
+
+    connection.release();
+
+    // Convertir a números para asegurar consistencia
+    const areas = result.map(row => ({
+      area: row.area,
+      total_estudiantes: parseInt(row.total_estudiantes) || 0,
+      total_sincronizados: parseInt(row.total_sincronizados) || 0,
+      porcentaje_sincronizados: parseFloat(row.porcentaje_sincronizados) || 0
+    }));
+
+    res.json({
+      areas,
+      total_areas: areas.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al obtener datos por área', message: error.message });
+  }
+});
+
+// 3. Desglose por Sede
 app.get('/api/matriculas/por-sede', async (req, res) => {
   try {
     const connection = await pool.getConnection();
@@ -593,6 +638,82 @@ app.get('/api/matriculas/habilitados-con-deuda', async (req, res) => {
     console.error('Error:', error);
     res.status(500).json({
       error: 'Error al obtener habilitados con deuda',
+      message: error.message
+    });
+  }
+});
+
+// 9. Progreso de habilitaciones por auxiliar (TESTING - NO PUBLICAR)
+app.get('/api/matriculas/progreso-auxiliares', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        dates.fecha,
+        u.id AS auxiliar_id,
+        CONCAT(u.paterno, ' ', u.materno, ', ', u.name) AS auxiliar,
+        COALESCE(COUNT(a.id), 0) AS total_habilitados
+      FROM (
+        SELECT DATE('2025-12-01') + INTERVAL (a.a + (10 * b.a)) DAY AS fecha
+        FROM (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+              UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6
+              UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) AS a
+        CROSS JOIN (SELECT 0 AS a UNION ALL SELECT 1 UNION ALL SELECT 2) AS b
+        WHERE DATE('2025-12-01') + INTERVAL (a.a + (10 * b.a)) DAY <= '2025-12-23'
+      ) AS dates
+      CROSS JOIN users u
+      LEFT JOIN audits a ON DATE(a.created_at) = dates.fecha
+        AND a.user_id = u.id
+        AND a.auditable_type = 'App\\\\Models\\\\Matricula'
+        AND a.event = 'updated'
+        AND a.old_values LIKE '%"habilitado":"0"%'
+        AND a.new_values LIKE '%"habilitado":"1"%'
+      WHERE
+        u.estado = '1'
+      GROUP BY
+        dates.fecha,
+        u.id,
+        u.paterno,
+        u.materno,
+        u.name
+      ORDER BY
+        auxiliar, dates.fecha
+    `);
+
+    connection.release();
+
+    // Agrupar datos por auxiliar
+    const auxiliaresMap = {};
+
+    result.forEach(row => {
+      const auxiliarId = row.auxiliar_id;
+
+      if (!auxiliaresMap[auxiliarId]) {
+        auxiliaresMap[auxiliarId] = {
+          auxiliar_id: auxiliarId,
+          auxiliar: row.auxiliar,
+          fechas: [],
+          totales: []
+        };
+      }
+
+      auxiliaresMap[auxiliarId].fechas.push(row.fecha);
+      auxiliaresMap[auxiliarId].totales.push(parseInt(row.total_habilitados) || 0);
+    });
+
+    const auxiliares = Object.values(auxiliaresMap);
+
+    res.json({
+      auxiliares,
+      total_auxiliares: auxiliares.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: 'Error al obtener progreso de auxiliares',
       message: error.message
     });
   }

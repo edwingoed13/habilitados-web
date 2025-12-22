@@ -21,3 +21,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Testing files (not for production)
+progreso-auxiliares.html
