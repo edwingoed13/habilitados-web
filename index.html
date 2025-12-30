@@ -148,11 +148,19 @@
 
         <!-- Módulo de Búsqueda de Constancia de No Adeudo -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4">
-                <h2 class="text-xl font-bold text-white">Descargar Constancia de No Adeudo</h2>
-                <p class="text-emerald-100 text-sm">Busca por DNI y descarga la constancia del estudiante</p>
-            </div>
-            <div class="p-6">
+            <button
+                onclick="toggleConstancia()"
+                class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between hover:from-emerald-600 hover:to-teal-700 transition-all"
+            >
+                <div class="text-left">
+                    <h2 class="text-xl font-bold text-white">Descargar Constancia de No Adeudo</h2>
+                    <p class="text-emerald-100 text-sm">Busca por DNI y descarga la constancia del estudiante</p>
+                </div>
+                <svg id="iconConstancia" class="w-6 h-6 text-white transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="contenidoConstancia" class="p-6 hidden">
                 <div class="max-w-2xl mx-auto">
                     <!-- Formulario de búsqueda -->
                     <div class="flex gap-3 mb-6">
@@ -906,6 +914,15 @@
             detalle.classList.toggle('hidden');
             icono.classList.toggle('rotate-180');
         });
+
+        // Toggle para mostrar/ocultar módulo de constancia
+        function toggleConstancia() {
+            const contenido = document.getElementById('contenidoConstancia');
+            const icono = document.getElementById('iconConstancia');
+
+            contenido.classList.toggle('hidden');
+            icono.classList.toggle('rotate-180');
+        }
 
         async function loadAllData() {
             const btnSvg = document.querySelector('#refreshBtn svg');
