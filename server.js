@@ -719,6 +719,112 @@ app.get('/api/matriculas/progreso-auxiliares', async (req, res) => {
   }
 });
 
+// Búsqueda de estudiante por DNI para descarga de constancia
+app.get('/api/matriculas/buscar-por-dni/:dni', async (req, res) => {
+  try {
+    const { dni } = req.params;
+
+    if (!dni || dni.trim() === '') {
+      return res.status(400).json({ error: 'DNI es requerido' });
+    }
+
+    const connection = await pool.getConnection();
+
+    const [result] = await connection.query(`
+      SELECT
+        m.id AS matricula_id,
+        e.nro_documento AS dni,
+        CONCAT(e.paterno, ' ', e.materno, ' ', e.nombres) AS apellidos_nombres,
+        m.habilitado,
+        m.habilitado_estado,
+        s.denominacion AS sede,
+        a.denominacion AS area,
+        t.denominacion AS turno,
+        g.denominacion AS grupo
+      FROM
+        estudiantes e
+        INNER JOIN matriculas m ON e.id = m.estudiantes_id
+        LEFT JOIN grupo_aulas ga ON m.grupo_aulas_id = ga.id
+        LEFT JOIN grupos g ON ga.grupos_id = g.id
+        LEFT JOIN areas a ON ga.areas_id = a.id
+        LEFT JOIN turnos t ON ga.turnos_id = t.id
+        LEFT JOIN aulas au ON ga.aulas_id = au.id
+        LEFT JOIN locales l ON au.locales_id = l.id
+        LEFT JOIN sedes s ON l.sedes_id = s.id
+      WHERE
+        e.nro_documento = ?
+        AND m.periodos_id = 1
+      LIMIT 1
+    `, [dni]);
+
+    connection.release();
+
+    if (result.length === 0) {
+      return res.status(404).json({
+        error: 'No se encontró estudiante con ese DNI',
+        dni: dni
+      });
+    }
+
+    const estudiante = result[0];
+
+    res.json({
+      matricula_id: estudiante.matricula_id,
+      dni: estudiante.dni,
+      apellidos_nombres: estudiante.apellidos_nombres,
+      habilitado: estudiante.habilitado === '1',
+      habilitado_estado: estudiante.habilitado_estado === '1',
+      sede: estudiante.sede,
+      area: estudiante.area,
+      turno: estudiante.turno,
+      grupo: estudiante.grupo,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: 'Error al buscar estudiante',
+      message: error.message
+    });
+  }
+});
+
+// Generar token encriptado para descarga de constancia
+app.get('/api/matriculas/generar-token/:matricula_id', async (req, res) => {
+  try {
+    const { matricula_id } = req.params;
+
+    if (!matricula_id || isNaN(matricula_id)) {
+      return res.status(400).json({ error: 'ID de matrícula inválido' });
+    }
+
+    // Hacer petición a la API externa para obtener el token
+    const response = await fetch(`https://sistemas.cepreuna.edu.pe/api/perfil/encrypt/${matricula_id}`);
+
+    if (!response.ok) {
+      throw new Error(`Error al generar token: ${response.status} ${response.statusText}`);
+    }
+
+    // La API devuelve el token como texto plano, no como JSON
+    const token = await response.text();
+
+    res.json({
+      token: token,
+      pdf_url: `https://sistemas.cepreuna.edu.pe/dga/estudiantes/pdf-constancia/${token}`,
+      matricula_id: parseInt(matricula_id),
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      error: 'Error al generar token',
+      message: error.message
+    });
+  }
+});
+
 // Endpoint de salud
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
