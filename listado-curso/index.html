@@ -94,6 +94,7 @@
                 <th class="px-4 py-3 text-left font-medium">Área</th>
                 <th class="px-4 py-3 text-left font-medium">Condición</th>
                 <th class="px-4 py-3 text-left font-medium">Celular</th>
+                <th class="px-4 py-3 text-left font-medium">Correo</th>
                 <th class="px-4 py-3 text-center font-medium">Acción</th>
               </tr>
             </thead>
@@ -302,6 +303,7 @@
           </td>
           <td class="px-4 py-3 text-gray-600 text-xs">${cond}</td>
           <td class="px-4 py-3 text-gray-600 text-xs">${item.celular || '—'}</td>
+          <td class="px-4 py-3 text-gray-600 text-xs">${item.email || '—'}</td>
           <td class="px-4 py-3 text-center">
             <button onclick="abrirModal(${item.id})"
               class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded-lg transition">
