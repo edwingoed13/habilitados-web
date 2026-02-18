@@ -12,6 +12,10 @@
     {
       "src": "curso-2026/index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "listado-curso/index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -22,6 +26,10 @@
     {
       "src": "/curso-2026",
       "dest": "/curso-2026/index.html"
+    },
+    {
+      "src": "/listado-curso",
+      "dest": "/listado-curso/index.html"
     },
     {
       "src": "/api/(.*)",

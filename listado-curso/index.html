@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listado Curso Taller 2026 — CEPREUNA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Listado Curso Taller 2026</h1>
+        <p class="text-indigo-200 text-sm mt-0.5">Centro Pre Universitario — CEPREUNA</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="ultimaActualizacion" class="text-indigo-200 text-xs hidden sm:block"></span>
+        <button onclick="cargarListado()" class="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-4 py-2 rounded-xl text-sm font-medium">
+          <svg id="iconRefresh" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A9 9 0 104.583 9.582"/>
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+
+    <!-- RESUMEN CARDS -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl shadow p-4 flex flex-col gap-1">
+        <p class="text-indigo-100 text-xs font-medium uppercase tracking-wide">Total</p>
+        <p id="cardTotal" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow p-4 flex flex-col gap-1">
+        <p class="text-blue-100 text-xs font-medium uppercase tracking-wide">Área 1</p>
+        <p id="cardArea1" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-2xl shadow p-4 flex flex-col gap-1">
+        <p class="text-violet-100 text-xs font-medium uppercase tracking-wide">Área 2</p>
+        <p id="cardArea2" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl shadow p-4 flex flex-col gap-1">
+        <p class="text-rose-100 text-xs font-medium uppercase tracking-wide">Área 3</p>
+        <p id="cardArea3" class="text-3xl font-bold">—</p>
+      </div>
+    </section>
+
+    <!-- BUSCADOR + TABLA -->
+    <section class="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex items-center gap-2 flex-1">
+          <div class="w-1 h-6 bg-indigo-500 rounded-full shrink-0"></div>
+          <h2 class="text-base font-semibold text-gray-800">Inscritos</h2>
+          <span id="badgeTotal" class="ml-1 bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+        </div>
+        <!-- Filtros -->
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <input id="busqueda" type="text" placeholder="Buscar nombre, DNI..."
+            class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full sm:w-56"
+            oninput="filtrarTabla()" />
+          <select id="filtroArea" onchange="filtrarTabla()"
+            class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <option value="">Todas las áreas</option>
+            <option value="1">Área 1</option>
+            <option value="2">Área 2</option>
+            <option value="3">Área 3</option>
+            <option value="4">Área 4</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Skeleton -->
+      <div id="skeletonTabla" class="p-5 space-y-3">
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+      </div>
+
+      <!-- Tabla desktop -->
+      <div id="contenedorTabla" class="hidden">
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                <th class="px-4 py-3 text-left font-medium">#</th>
+                <th class="px-4 py-3 text-left font-medium">Apellidos y Nombres</th>
+                <th class="px-4 py-3 text-left font-medium">DNI</th>
+                <th class="px-4 py-3 text-left font-medium">Área</th>
+                <th class="px-4 py-3 text-left font-medium">Condición</th>
+                <th class="px-4 py-3 text-left font-medium">Celular</th>
+                <th class="px-4 py-3 text-center font-medium">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyListado" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+        <!-- Cards mobile -->
+        <div id="cardsListado" class="sm:hidden p-4 space-y-3"></div>
+        <!-- Sin resultados -->
+        <div id="sinResultados" class="hidden py-10 text-center text-gray-400 text-sm">
+          No se encontraron resultados para la búsqueda.
+        </div>
+      </div>
+
+      <div id="errorTabla" class="hidden p-5 text-center text-red-500 text-sm">
+        No se pudo cargar el listado. Intenta nuevamente.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL EDICIÓN -->
+  <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-start justify-center p-4 pt-10">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+
+      <!-- Modal header -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+        <h3 class="text-base font-semibold text-gray-800">Editar Inscripción</h3>
+        <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal body -->
+      <form id="formEditar" class="px-6 py-5 space-y-4" onsubmit="guardarEdicion(event)">
+        <input type="hidden" id="editId" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Paterno -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Apellido Paterno</label>
+            <input id="editPaterno" type="text" required
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+          </div>
+          <!-- Materno -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Apellido Materno</label>
+            <input id="editMaterno" type="text" required
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+          </div>
+        </div>
+
+        <!-- Nombres -->
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Nombres</label>
+          <input id="editNombre" type="text" required
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Documento -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Nro. Documento</label>
+            <input id="editDocumento" type="text" required maxlength="15"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+          </div>
+          <!-- Celular -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Celular</label>
+            <input id="editCelular" type="text" required
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Correo Electrónico</label>
+          <input id="editEmail" type="email" required
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Área -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Área</label>
+            <select id="editArea" required
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
+              <option value="1">Área 1 — Matemática</option>
+              <option value="2">Área 2 — Verbal</option>
+              <option value="3">Área 3 — Ciencias</option>
+              <option value="4">Área 4 — Sociales</option>
+            </select>
+          </div>
+          <!-- Condición -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Condición</label>
+            <select id="editCondicion" required
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
+              <option value="1">UNAP</option>
+              <option value="2">Particular</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Alerta error -->
+        <div id="alertaModal" class="hidden rounded-xl p-3 text-sm"></div>
+
+        <!-- Botones -->
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="cerrarModal()"
+            class="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl py-2.5 text-sm font-medium transition">
+            Cancelar
+          </button>
+          <button type="submit" id="btnGuardar"
+            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 text-sm font-medium transition flex items-center justify-center gap-2">
+            <svg id="iconGuardar" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] hidden">
+    <div id="toastContent" class="px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white flex items-center gap-2"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-gray-400 text-xs py-6">
+    CEPREUNA &mdash; Listado Curso Taller 2026 &bull; Datos en tiempo real
+  </footer>
+
+<script>
+  const API_BASE = window.location.origin;
+  const LARAVEL_BASE = 'https://sistemas.cepreuna.edu.pe';
+
+  const AREAS = {
+    '1': { label: 'Área 1', short: 'Matemática', color: 'bg-blue-100 text-blue-700' },
+    '2': { label: 'Área 2', short: 'Verbal',     color: 'bg-violet-100 text-violet-700' },
+    '3': { label: 'Área 3', short: 'Ciencias',   color: 'bg-rose-100 text-rose-700' },
+    '4': { label: 'Área 4', short: 'Sociales',   color: 'bg-amber-100 text-amber-700' },
+  };
+
+  const CONDICION = { '1': 'UNAP', '2': 'Particular' };
+
+  let listadoCompleto = [];
+
+  // ---- TOAST ----
+  let toastTimer;
+  function mostrarToast(mensaje, tipo = 'success') {
+    const toast = document.getElementById('toast');
+    const content = document.getElementById('toastContent');
+    const bg = tipo === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+    const icon = tipo === 'success'
+      ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+    content.className = `px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white flex items-center gap-2 ${bg}`;
+    content.innerHTML = icon + mensaje;
+    toast.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add('hidden'), 3500);
+  }
+
+  // ---- RENDERIZAR TABLA ----
+  function renderTabla(datos) {
+    const tbody = document.getElementById('tbodyListado');
+    const cards = document.getElementById('cardsListado');
+    const sinRes = document.getElementById('sinResultados');
+
+    if (datos.length === 0) {
+      tbody.innerHTML = '';
+      cards.innerHTML = '';
+      sinRes.classList.remove('hidden');
+      return;
+    }
+    sinRes.classList.add('hidden');
+
+    let rowsHtml = '';
+    let cardsHtml = '';
+
+    datos.forEach((item, idx) => {
+      const area = AREAS[String(item.area)] || { label: `Área ${item.area}`, short: '', color: 'bg-gray-100 text-gray-700' };
+      const cond = CONDICION[String(item.condicion)] || item.condicion;
+      const nombre = `${item.paterno} ${item.materno}, ${item.nombres}`;
+      const bg = idx % 2 === 0 ? '' : 'bg-gray-50/50';
+
+      rowsHtml += `
+        <tr class="${bg} hover:bg-indigo-50/40 transition-colors">
+          <td class="px-4 py-3 text-gray-400 text-xs">${item.id}</td>
+          <td class="px-4 py-3 font-medium text-gray-800">${nombre}</td>
+          <td class="px-4 py-3 font-mono text-gray-600 text-xs">${item.nro_documento}</td>
+          <td class="px-4 py-3">
+            <span class="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full ${area.color}">${area.label}</span>
+          </td>
+          <td class="px-4 py-3 text-gray-600 text-xs">${cond}</td>
+          <td class="px-4 py-3 text-gray-600 text-xs">${item.celular || '—'}</td>
+          <td class="px-4 py-3 text-center">
+            <button onclick="abrirModal(${item.id})"
+              class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded-lg transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Editar
+            </button>
+          </td>
+        </tr>`;
+
+      cardsHtml += `
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <p class="font-semibold text-gray-800 text-sm leading-tight">${nombre}</p>
+              <p class="font-mono text-gray-400 text-xs mt-0.5">${item.nro_documento}</p>
+            </div>
+            <span class="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full shrink-0 ${area.color}">${area.label}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex gap-3 text-xs text-gray-500">
+              <span>${cond}</span>
+              <span>${item.celular || '—'}</span>
+            </div>
+            <button onclick="abrirModal(${item.id})"
+              class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded-lg transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Editar
+            </button>
+          </div>
+        </div>`;
+    });
+
+    tbody.innerHTML = rowsHtml;
+    cards.innerHTML = cardsHtml;
+  }
+
+  // ---- FILTRAR ----
+  function filtrarTabla() {
+    const q = document.getElementById('busqueda').value.toLowerCase().trim();
+    const area = document.getElementById('filtroArea').value;
+
+    const filtrado = listadoCompleto.filter(item => {
+      const nombre = `${item.paterno} ${item.materno} ${item.nombres}`.toLowerCase();
+      const dni = (item.nro_documento || '').toLowerCase();
+      const matchQ = !q || nombre.includes(q) || dni.includes(q);
+      const matchArea = !area || String(item.area) === area;
+      return matchQ && matchArea;
+    });
+
+    document.getElementById('badgeTotal').textContent = filtrado.length;
+    renderTabla(filtrado);
+  }
+
+  // ---- CARGAR LISTADO ----
+  async function cargarListado() {
+    document.getElementById('iconRefresh').classList.add('animate-spin');
+    document.getElementById('skeletonTabla').classList.remove('hidden');
+    document.getElementById('contenedorTabla').classList.add('hidden');
+    document.getElementById('errorTabla').classList.add('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/listado-curso/inscritos`);
+      if (!res.ok) throw new Error('Error ' + res.status);
+      const data = await res.json();
+
+      listadoCompleto = data.listado || [];
+
+      // Resumen cards
+      document.getElementById('cardTotal').textContent = (data.total || 0).toLocaleString('es-PE');
+      const porArea = {};
+      (data.por_area || []).forEach(a => { porArea[String(a.area)] = a.total; });
+      document.getElementById('cardArea1').textContent = (porArea['1'] || 0).toLocaleString('es-PE');
+      document.getElementById('cardArea2').textContent = (porArea['2'] || 0).toLocaleString('es-PE');
+      document.getElementById('cardArea3').textContent = (porArea['3'] || 0).toLocaleString('es-PE');
+
+      document.getElementById('badgeTotal').textContent = listadoCompleto.length;
+      renderTabla(listadoCompleto);
+
+      document.getElementById('skeletonTabla').classList.add('hidden');
+      document.getElementById('contenedorTabla').classList.remove('hidden');
+      document.getElementById('ultimaActualizacion').textContent =
+        'Actualizado: ' + new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+
+    } catch (e) {
+      console.error('Error listado:', e);
+      document.getElementById('skeletonTabla').classList.add('hidden');
+      document.getElementById('errorTabla').classList.remove('hidden');
+    } finally {
+      document.getElementById('iconRefresh').classList.remove('animate-spin');
+    }
+  }
+
+  // ---- MODAL ----
+  function abrirModal(id) {
+    const item = listadoCompleto.find(i => i.id === id);
+    if (!item) return;
+
+    document.getElementById('editId').value = item.id;
+    document.getElementById('editNombre').value = item.nombres || '';
+    document.getElementById('editPaterno').value = item.paterno || '';
+    document.getElementById('editMaterno').value = item.materno || '';
+    document.getElementById('editDocumento').value = item.nro_documento || '';
+    document.getElementById('editCelular').value = item.celular || '';
+    document.getElementById('editEmail').value = item.email || '';
+    document.getElementById('editArea').value = String(item.area) || '1';
+    document.getElementById('editCondicion').value = String(item.condicion) || '1';
+
+    document.getElementById('alertaModal').classList.add('hidden');
+    document.getElementById('alertaModal').innerHTML = '';
+    document.getElementById('modalOverlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+  });
+
+  // ---- GUARDAR EDICIÓN ----
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const btnGuardar = document.getElementById('btnGuardar');
+    const iconGuardar = document.getElementById('iconGuardar');
+    const alerta = document.getElementById('alertaModal');
+
+    const payload = {
+      nombre:    document.getElementById('editNombre').value.trim(),
+      paterno:   document.getElementById('editPaterno').value.trim(),
+      materno:   document.getElementById('editMaterno').value.trim(),
+      documento: document.getElementById('editDocumento').value.trim(),
+      celular:   document.getElementById('editCelular').value.trim(),
+      correo:    document.getElementById('editEmail').value.trim(),
+      area:      document.getElementById('editArea').value,
+      condicion: document.getElementById('editCondicion').value,
+    };
+
+    btnGuardar.disabled = true;
+    iconGuardar.classList.add('animate-spin');
+    alerta.classList.add('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/listado-curso/actualizar/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.status === false) {
+        // Mostrar errores de validación si existen
+        let msg = data.message || 'Error al guardar los cambios.';
+        if (data.errors) {
+          const errores = Object.values(data.errors).flat();
+          msg = errores.join('<br>');
+        }
+        alerta.className = 'bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700';
+        alerta.innerHTML = msg;
+        alerta.classList.remove('hidden');
+        return;
+      }
+
+      // Actualizar el item localmente para reflejar cambios sin recargar
+      const idx = listadoCompleto.findIndex(i => i.id === parseInt(id));
+      if (idx !== -1) {
+        listadoCompleto[idx] = {
+          ...listadoCompleto[idx],
+          nombres: payload.nombre,
+          paterno: payload.paterno,
+          materno: payload.materno,
+          nro_documento: payload.documento,
+          celular: payload.celular,
+          email: payload.correo,
+          area: payload.area,
+          condicion: payload.condicion,
+        };
+        filtrarTabla();
+      }
+
+      cerrarModal();
+      mostrarToast('Inscripción actualizada correctamente.', 'success');
+
+    } catch (err) {
+      console.error('Error guardar:', err);
+      alerta.className = 'bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700';
+      alerta.innerHTML = 'Error de conexión. Intenta nuevamente.';
+      alerta.classList.remove('hidden');
+    } finally {
+      btnGuardar.disabled = false;
+      iconGuardar.classList.remove('animate-spin');
+    }
+  }
+
+  // Iniciar
+  cargarListado();
+</script>
+</body>
+</html>

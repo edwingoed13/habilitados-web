@@ -825,6 +825,47 @@ app.get('/api/matriculas/generar-token/:matricula_id', async (req, res) => {
   }
 });
 
+// ============ ENDPOINTS LISTADO CURSO TALLER 2026 ============
+
+// Proxy GET: obtiene el listado completo desde el sistema Laravel
+app.get('/api/listado-curso/inscritos', async (_req, res) => {
+  try {
+    const response = await fetch('https://sistemas.cepreuna.edu.pe/api/curso-taller/inscripciones');
+    if (!response.ok) throw new Error(`Error externo: ${response.status}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error listado-curso inscritos:', error);
+    res.status(500).json({ error: 'Error al obtener listado', message: error.message });
+  }
+});
+
+// Proxy PUT: actualiza un inscrito en el sistema Laravel
+app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+
+    const response = await fetch(`https://sistemas.cepreuna.edu.pe/api/inscripciones/curso/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(req.body)
+    });
+
+    const data = await response.json();
+    res.status(response.status).json(data);
+
+  } catch (error) {
+    console.error('Error listado-curso actualizar:', error);
+    res.status(500).json({ error: 'Error al actualizar inscripción', message: error.message });
+  }
+});
+
 // ============ ENDPOINTS CURSO TALLER 2026 ============
 
 // Inscritos por área del curso taller
