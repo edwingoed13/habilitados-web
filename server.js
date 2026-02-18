@@ -863,6 +863,51 @@ app.get('/api/curso2026/pagos', async (req, res) => {
   }
 });
 
+// Buscar inscrito al curso taller por DNI
+app.get('/api/curso2026/buscar/:dni', async (req, res) => {
+  try {
+    const { dni } = req.params;
+    if (!dni || !/^\d{8}$/.test(dni)) {
+      return res.status(400).json({ error: 'DNI inválido. Debe tener 8 dígitos.' });
+    }
+
+    const [rows] = await pool.execute(`
+      SELECT
+        nombres, paterno, materno,
+        nro_documento, area, condicion, path
+      FROM inscripcion_curso_tallers
+      WHERE nro_documento = ?
+      LIMIT 1
+    `, [dni]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ encontrado: false, message: 'No se encontró inscripción para este DNI.' });
+    }
+
+    const inscrito = rows[0];
+    const AREAS = {
+      1: 'Razonamiento Matemático, Aritmética, Álgebra, Geometría, Trigonometría',
+      2: 'Razonamiento Verbal, Comunicación, Literatura, Quechua y Aimara',
+      3: 'Física, Química, Biología y Anatomía',
+      4: 'Geografía, Historia, Educación Cívica, Economía, Psicología y Filosofía'
+    };
+
+    res.json({
+      encontrado: true,
+      nombres: `${inscrito.paterno} ${inscrito.materno}, ${inscrito.nombres}`,
+      nro_documento: inscrito.nro_documento,
+      area: inscrito.area,
+      area_descripcion: AREAS[inscrito.area] || `Área ${inscrito.area}`,
+      condicion: inscrito.condicion == 1 ? 'UNAP' : 'Particular',
+      pdf_url: inscrito.path ? `https://sistemas.cepreuna.edu.pe/${inscrito.path}` : null
+    });
+
+  } catch (error) {
+    console.error('Error búsqueda curso2026:', error);
+    res.status(500).json({ error: 'Error al buscar inscripción', message: error.message });
+  }
+});
+
 // Endpoint de salud
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

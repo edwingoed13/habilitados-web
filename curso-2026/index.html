@@ -149,6 +149,42 @@
       </div>
     </section>
 
+    <!-- BUSCADOR POR DNI -->
+    <section class="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div class="w-1 h-6 bg-sky-500 rounded-full"></div>
+        <h2 class="text-base font-semibold text-gray-800">Consulta de Ficha por DNI</h2>
+      </div>
+
+      <div class="px-5 py-5">
+        <!-- Input + botón -->
+        <div class="flex gap-2">
+          <input
+            id="inputDni"
+            type="text"
+            inputmode="numeric"
+            maxlength="8"
+            placeholder="Ingresa el DNI (8 dígitos)"
+            class="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition"
+            onkeydown="if(event.key==='Enter') buscarDni()"
+          />
+          <button
+            onclick="buscarDni()"
+            id="btnBuscar"
+            class="bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white px-5 py-3 rounded-xl text-sm font-medium transition flex items-center gap-2 shrink-0"
+          >
+            <svg id="iconBuscar" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 0 5 11a6 6 0 0 0 12 0z"/>
+            </svg>
+            Buscar
+          </button>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultadoDni" class="mt-4 hidden"></div>
+      </div>
+    </section>
+
   </main>
 
   <!-- FOOTER -->
@@ -299,6 +335,101 @@
     document.getElementById('iconRefresh').classList.remove('animate-spin');
     document.getElementById('ultimaActualizacion').textContent =
       'Actualizado: ' + new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ---- BÚSQUEDA DNI ----
+  const COLOR_AREA = {
+    1: 'bg-blue-50 text-blue-700 border-blue-200',
+    2: 'bg-violet-50 text-violet-700 border-violet-200',
+    3: 'bg-rose-50 text-rose-700 border-rose-200',
+    4: 'bg-amber-50 text-amber-700 border-amber-200',
+  };
+
+  async function buscarDni() {
+    const dni = document.getElementById('inputDni').value.trim();
+    const resultado = document.getElementById('resultadoDni');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const iconBuscar = document.getElementById('iconBuscar');
+
+    if (!/^\d{8}$/.test(dni)) {
+      resultado.className = 'mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm';
+      resultado.innerHTML = '<span class="font-medium">DNI inválido.</span> Debe tener exactamente 8 dígitos.';
+      resultado.classList.remove('hidden');
+      return;
+    }
+
+    // Estado cargando
+    btnBuscar.disabled = true;
+    iconBuscar.classList.add('animate-spin');
+    resultado.classList.add('hidden');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/curso2026/buscar/${dni}`);
+      const data = await res.json();
+
+      if (res.status === 404 || !data.encontrado) {
+        resultado.className = 'mt-4 bg-red-50 border border-red-200 rounded-xl p-4';
+        resultado.innerHTML = `
+          <div class="flex items-center gap-2 text-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-medium text-sm">No se encontró inscripción para el DNI <span class="font-bold">${dni}</span>.</span>
+          </div>`;
+      } else {
+        const areaColor = COLOR_AREA[data.area] || 'bg-gray-50 text-gray-700 border-gray-200';
+        const pdfBtn = data.pdf_url
+          ? `<a href="${data.pdf_url}" target="_blank"
+               class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+               </svg>
+               Ver Ficha PDF
+             </a>`
+          : `<span class="text-xs text-gray-400 italic">Ficha PDF no disponible aún</span>`;
+
+        resultado.className = 'mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3';
+        resultado.innerHTML = `
+          <div class="flex items-center gap-2 text-emerald-700 mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="font-semibold text-sm">Inscripción encontrada</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wide mb-0.5">Nombre completo</p>
+              <p class="font-semibold text-gray-800">${data.nombres}</p>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wide mb-0.5">DNI</p>
+              <p class="font-mono text-gray-800">${data.nro_documento}</p>
+            </div>
+            <div class="sm:col-span-2">
+              <p class="text-gray-400 text-xs uppercase tracking-wide mb-0.5">Área</p>
+              <span class="inline-block border text-xs font-medium px-3 py-1 rounded-full ${areaColor}">
+                Área ${data.area} — ${data.area_descripcion}
+              </span>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wide mb-0.5">Condición</p>
+              <p class="text-gray-800">${data.condicion}</p>
+            </div>
+          </div>
+          <div class="pt-1">${pdfBtn}</div>`;
+      }
+
+      resultado.classList.remove('hidden');
+
+    } catch (e) {
+      console.error('Búsqueda error:', e);
+      resultado.className = 'mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm';
+      resultado.innerHTML = 'Error al consultar. Verifica tu conexión e intenta de nuevo.';
+      resultado.classList.remove('hidden');
+    } finally {
+      btnBuscar.disabled = false;
+      iconBuscar.classList.remove('animate-spin');
+    }
   }
 
   // Inicializar
