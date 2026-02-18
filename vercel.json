@@ -8,12 +8,20 @@
     {
       "src": "index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "curso-2026/index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/",
       "dest": "/index.html"
+    },
+    {
+      "src": "/curso-2026",
+      "dest": "/curso-2026/index.html"
     },
     {
       "src": "/api/(.*)",

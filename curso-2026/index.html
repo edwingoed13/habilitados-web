@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curso Taller 2026 — CEPREUNA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-indigo-700 to-purple-700 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Curso Taller 2026</h1>
+        <p class="text-indigo-200 text-sm mt-0.5">Centro Pre Universitario — CEPREUNA</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="ultimaActualizacion" class="text-indigo-200 text-xs"></span>
+        <button
+          onclick="cargarDatos()"
+          class="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 transition px-4 py-2 rounded-xl text-sm font-medium"
+        >
+          <svg id="iconRefresh" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A9 9 0 104.583 9.582" />
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- TARJETAS RESUMEN -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <!-- Total Inscritos -->
+      <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl shadow-md p-5 flex items-center gap-4">
+        <div class="bg-white bg-opacity-20 p-3 rounded-full shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5M12 12a4 4 0 100-8 4 4 0 000 8z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-indigo-100 text-xs font-medium uppercase tracking-wide">Total Inscritos</p>
+          <p id="totalInscritos" class="text-4xl font-bold mt-0.5">—</p>
+        </div>
+      </div>
+
+      <!-- Total Pagos -->
+      <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-md p-5 flex items-center gap-4">
+        <div class="bg-white bg-opacity-20 p-3 rounded-full shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 9V7a5 5 0 00-10 0v2M3 9h18l-1.5 12H4.5L3 9z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-emerald-100 text-xs font-medium uppercase tracking-wide">Total Pagos</p>
+          <p id="totalPagos" class="text-4xl font-bold mt-0.5">—</p>
+        </div>
+      </div>
+
+      <!-- Total Áreas -->
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-md p-5 flex items-center gap-4">
+        <div class="bg-white bg-opacity-20 p-3 rounded-full shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-purple-100 text-xs font-medium uppercase tracking-wide">Áreas</p>
+          <p class="text-4xl font-bold mt-0.5">4</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TABLA INSCRITOS POR ÁREA -->
+    <section class="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
+        <h2 class="text-base font-semibold text-gray-800">Inscritos por Área</h2>
+      </div>
+
+      <!-- Skeleton / Estado de carga -->
+      <div id="skeletonAreas" class="p-5 space-y-3">
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+      </div>
+
+      <div id="tablaAreas" class="hidden">
+        <!-- Tabla desktop -->
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                <th class="px-5 py-3 text-left font-medium">Área</th>
+                <th class="px-5 py-3 text-left font-medium">Cursos</th>
+                <th class="px-5 py-3 text-right font-medium">Inscritos</th>
+                <th class="px-5 py-3 text-right font-medium">Proporción</th>
+              </tr>
+            </thead>
+            <tbody id="filasAreas" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+
+        <!-- Cards mobile -->
+        <div id="cardsAreas" class="sm:hidden p-4 space-y-3"></div>
+      </div>
+
+      <div id="errorAreas" class="hidden p-5 text-center text-red-500 text-sm">
+        No se pudieron cargar los datos de áreas.
+      </div>
+    </section>
+
+    <!-- SECCIÓN PAGOS -->
+    <section class="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div class="w-1 h-6 bg-emerald-500 rounded-full"></div>
+        <h2 class="text-base font-semibold text-gray-800">Pagos Registrados desde el 08-Feb-2026</h2>
+        <span class="ml-auto text-xs text-gray-400">Importe mínimo: S/ 41.00</span>
+      </div>
+
+      <div id="skeletonPagos" class="p-5 space-y-3">
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+        <div class="h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+      </div>
+
+      <div id="tablaPagos" class="hidden">
+        <!-- Resumen pagos -->
+        <div class="px-5 py-4">
+          <div class="bg-emerald-50 rounded-xl p-4 text-center">
+            <p class="text-emerald-600 text-xs font-medium mb-1">Total Pagos</p>
+            <p id="cantidadPagos" class="text-3xl font-bold text-emerald-700">—</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="errorPagos" class="hidden p-5 text-center text-red-500 text-sm">
+        No se pudieron cargar los pagos.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-gray-400 text-xs py-6">
+    CEPREUNA &mdash; Curso Taller 2026 &bull; Datos en tiempo real
+  </footer>
+
+<script>
+  const API_BASE = window.location.origin;
+
+  // Mapa de áreas
+  const AREAS = {
+    1: { nombre: 'Área 1', cursos: 'Razonamiento Matemático, Aritmética, Álgebra, Geometría, Trigonometría', color: 'blue' },
+    2: { nombre: 'Área 2', cursos: 'Razonamiento Verbal, Comunicación, Literatura, Quechua y Aimara', color: 'violet' },
+    3: { nombre: 'Área 3', cursos: 'Física, Química, Biología y Anatomía', color: 'rose' },
+    4: { nombre: 'Área 4', cursos: 'Geografía, Historia, Educación Cívica, Economía, Psicología y Filosofía', color: 'amber' },
+  };
+
+  const COLOR_MAP = {
+    blue:   { row: 'bg-blue-50',   badge: 'bg-blue-100 text-blue-700',   bar: 'bg-blue-400' },
+    violet: { row: 'bg-violet-50', badge: 'bg-violet-100 text-violet-700', bar: 'bg-violet-400' },
+    rose:   { row: 'bg-rose-50',   badge: 'bg-rose-100 text-rose-700',   bar: 'bg-rose-400' },
+    amber:  { row: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700',  bar: 'bg-amber-400' },
+  };
+
+  function fmtMoney(n) {
+    return 'S/ ' + parseFloat(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  // ---- AREAS ----
+  async function cargarAreas() {
+    try {
+      const res = await fetch(`${API_BASE}/api/curso2026/inscritos-por-area`);
+      if (!res.ok) throw new Error('Error ' + res.status);
+      const data = await res.json();
+
+      const total = data.reduce((s, r) => s + Number(r.total_inscritos), 0);
+      document.getElementById('totalInscritos').textContent = total.toLocaleString('es-PE');
+
+      // Tabla desktop
+      const tbody = document.getElementById('filasAreas');
+      // Cards mobile
+      const cards = document.getElementById('cardsAreas');
+
+      let rowsHtml = '';
+      let cardsHtml = '';
+
+      data.forEach(row => {
+        const areaId = Number(row.area);
+        const info = AREAS[areaId] || { nombre: `Área ${areaId}`, cursos: '', color: 'blue' };
+        const c = COLOR_MAP[info.color];
+        const count = Number(row.total_inscritos);
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+        rowsHtml += `
+          <tr class="hover:${c.row} transition-colors">
+            <td class="px-5 py-3">
+              <span class="font-semibold text-gray-800">${info.nombre}</span>
+            </td>
+            <td class="px-5 py-3 text-gray-500 text-xs leading-snug">${info.cursos}</td>
+            <td class="px-5 py-3 text-right">
+              <span class="inline-block ${c.badge} font-bold px-3 py-1 rounded-full text-sm">${count.toLocaleString('es-PE')}</span>
+            </td>
+            <td class="px-5 py-3 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <div class="w-20 bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div class="${c.bar} h-2 rounded-full" style="width:${pct}%"></div>
+                </div>
+                <span class="text-gray-500 text-xs w-8 text-right">${pct}%</span>
+              </div>
+            </td>
+          </tr>`;
+
+        cardsHtml += `
+          <div class="${c.row} rounded-xl p-4">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-gray-800 text-sm">${info.nombre}</span>
+              <span class="${c.badge} font-bold px-3 py-0.5 rounded-full text-sm">${count.toLocaleString('es-PE')}</span>
+            </div>
+            <p class="text-gray-500 text-xs mb-2">${info.cursos}</p>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-white bg-opacity-60 rounded-full h-2 overflow-hidden">
+                <div class="${c.bar} h-2 rounded-full" style="width:${pct}%"></div>
+              </div>
+              <span class="text-gray-400 text-xs">${pct}%</span>
+            </div>
+          </div>`;
+      });
+
+      tbody.innerHTML = rowsHtml;
+      cards.innerHTML = cardsHtml;
+
+      document.getElementById('skeletonAreas').classList.add('hidden');
+      document.getElementById('tablaAreas').classList.remove('hidden');
+
+    } catch (e) {
+      console.error('Areas error:', e);
+      document.getElementById('skeletonAreas').classList.add('hidden');
+      document.getElementById('errorAreas').classList.remove('hidden');
+    }
+  }
+
+  // ---- PAGOS ----
+  async function cargarPagos() {
+    try {
+      const res = await fetch(`${API_BASE}/api/curso2026/pagos`);
+      if (!res.ok) throw new Error('Error ' + res.status);
+      const data = await res.json();
+
+      const { total_pagos } = data;
+
+      document.getElementById('totalPagos').textContent = Number(total_pagos).toLocaleString('es-PE');
+      document.getElementById('cantidadPagos').textContent = Number(total_pagos).toLocaleString('es-PE');
+
+      document.getElementById('skeletonPagos').classList.add('hidden');
+      document.getElementById('tablaPagos').classList.remove('hidden');
+
+    } catch (e) {
+      console.error('Pagos error:', e);
+      document.getElementById('skeletonPagos').classList.add('hidden');
+      document.getElementById('errorPagos').classList.remove('hidden');
+    }
+  }
+
+  // ---- CARGA GLOBAL ----
+  async function cargarDatos() {
+    // Spinner en botón refresh
+    document.getElementById('iconRefresh').classList.add('animate-spin');
+
+    // Resetear estados
+    ['skeletonAreas','skeletonPagos'].forEach(id => {
+      document.getElementById(id).classList.remove('hidden');
+    });
+    ['tablaAreas','errorAreas','tablaPagos','errorPagos'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById('totalInscritos').textContent = '—';
+    document.getElementById('totalPagos').textContent = '—';
+
+    await Promise.all([cargarAreas(), cargarPagos()]);
+
+    document.getElementById('iconRefresh').classList.remove('animate-spin');
+    document.getElementById('ultimaActualizacion').textContent =
+      'Actualizado: ' + new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Inicializar
+  cargarDatos();
+  // Auto-refresh cada 2 minutos
+  setInterval(cargarDatos, 120000);
+</script>
+</body>
+</html>

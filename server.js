@@ -825,6 +825,44 @@ app.get('/api/matriculas/generar-token/:matricula_id', async (req, res) => {
   }
 });
 
+// ============ ENDPOINTS CURSO TALLER 2026 ============
+
+// Inscritos por área del curso taller
+app.get('/api/curso2026/inscritos-por-area', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT
+        area,
+        COUNT(*) AS total_inscritos
+      FROM inscripcion_curso_tallers
+      GROUP BY area
+      ORDER BY area
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error inscritos-por-area curso2026:', error);
+    res.status(500).json({ error: 'Error al obtener inscritos por área', message: error.message });
+  }
+});
+
+// Pagos del curso taller (desde 08-Feb-2026, importe >= 41)
+app.get('/api/curso2026/pagos', async (req, res) => {
+  try {
+    const [[resumen]] = await pool.execute(`
+      SELECT COUNT(*) AS total_pagos
+      FROM banco_pagos
+      WHERE fch_pag >= '2026-02-08' AND imp_pag >= 41
+    `);
+
+    res.json({
+      total_pagos: resumen.total_pagos || 0
+    });
+  } catch (error) {
+    console.error('Error pagos curso2026:', error);
+    res.status(500).json({ error: 'Error al obtener pagos', message: error.message });
+  }
+});
+
 // Endpoint de salud
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
