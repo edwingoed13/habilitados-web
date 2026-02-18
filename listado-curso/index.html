@@ -200,6 +200,13 @@
           </div>
         </div>
 
+        <!-- Monto -->
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Monto (S/)</label>
+          <input id="editMonto" type="number" step="0.01" min="0" required
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" />
+        </div>
+
         <!-- Alerta error -->
         <div id="alertaModal" class="hidden rounded-xl p-3 text-sm"></div>
 
@@ -405,6 +412,7 @@
     document.getElementById('editEmail').value = item.email || '';
     document.getElementById('editArea').value = String(item.area) || '1';
     document.getElementById('editCondicion').value = String(item.condicion) || '1';
+    document.getElementById('editMonto').value = item.monto || '41.00';
 
     document.getElementById('alertaModal').classList.add('hidden');
     document.getElementById('alertaModal').innerHTML = '';
@@ -439,6 +447,7 @@
       correo:    document.getElementById('editEmail').value.trim(),
       area:      document.getElementById('editArea').value,
       condicion: document.getElementById('editCondicion').value,
+      monto:     document.getElementById('editMonto').value,
     };
 
     btnGuardar.disabled = true;
@@ -480,6 +489,7 @@
           email: payload.correo,
           area: payload.area,
           condicion: payload.condicion,
+          monto: payload.monto,
         };
         filtrarTabla();
       }
