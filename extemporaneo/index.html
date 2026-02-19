@@ -443,7 +443,7 @@
 
         // Validar voucher
         async function validarVoucher() {
-            const tipo_pago = document.getElementById('selectPago').value;
+            const tipo_pago_value = document.getElementById('selectPago').value;
             const nro_documento = document.getElementById('documento').value;
             const secuencia = document.getElementById('secuencia').value;
             const fecha = document.getElementById('fecha').value;
@@ -454,6 +454,13 @@
                 alert('Por favor completa todos los campos y adjunta el archivo del voucher.');
                 return;
             }
+
+            // Mapear tipo_pago a los valores esperados por la API
+            const tipoPagoMap = {
+                '1': 'VENTANILLA_BN',
+                '2': 'PAGALO_PE'
+            };
+            const tipo_pago = tipoPagoMap[tipo_pago_value] || tipo_pago_value;
 
             const btnValidar = document.getElementById('btnValidarVoucher');
             btnValidar.disabled = true;

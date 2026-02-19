@@ -1033,7 +1033,9 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
       secuencia,
       fecha,
       monto,
-      archivo_recibido: !!archivo
+      archivo_recibido: !!archivo,
+      archivo_size: archivo ? archivo.size : 0,
+      archivo_mimetype: archivo ? archivo.mimetype : null
     });
 
     if (!archivo) {
@@ -1046,19 +1048,39 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
       });
     }
 
-    console.log(`🔄 Validando voucher para DNI: ${nro_documento}...`);
+    // Validar que tipo_pago sea uno de los valores esperados
+    const tiposPagoValidos = ['VENTANILLA_BN', 'PAGALO_PE'];
+    if (!tiposPagoValidos.includes(tipo_pago)) {
+      console.log(`❌ Tipo de pago inválido: ${tipo_pago}`);
+      return res.status(400).json({
+        error: 'Tipo de pago inválido',
+        detail: `El tipo de pago debe ser uno de: ${tiposPagoValidos.join(', ')}`,
+        received: tipo_pago
+      });
+    }
+
+    console.log(`🔄 Validando voucher para DNI: ${nro_documento}, tipo_pago: ${tipo_pago}...`);
 
     // Crear FormData para enviar a la API externa
     const FormData = (await import('form-data')).default;
     const formData = new FormData();
-    formData.append('tipo_pago', tipo_pago);
+    formData.append('tipo_pago', tipo_pago);  // Ya es string correcto (VENTANILLA_BN o PAGALO_PE)
     formData.append('nro_documento', nro_documento);
     formData.append('secuencia', secuencia);
     formData.append('fecha', fecha);
-    formData.append('monto', monto);
+    formData.append('monto', String(monto));  // Asegurar que sea string
     formData.append('archivo', archivo.buffer, {
       filename: archivo.originalname,
       contentType: archivo.mimetype
+    });
+
+    console.log('📤 Enviando a API externa con FormData:', {
+      tipo_pago,
+      nro_documento,
+      secuencia,
+      fecha,
+      monto,
+      filename: archivo.originalname
     });
 
     const response = await fetch('https://prepagovalido.waready.org.pe/api/v1/vouchers/validate', {
