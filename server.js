@@ -842,10 +842,10 @@ app.get('/api/listado-curso/inscritos', async (_req, res) => {
         materno,
         nro_documento,
         email,
+        celular,
         area,
         condicion,
-        monto,
-        '' as celular
+        monto
       FROM inscripcion_curso_tallers
       ORDER BY id ASC
     `);
@@ -943,11 +943,12 @@ app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
         materno = ?,
         nro_documento = ?,
         email = ?,
+        celular = ?,
         area = ?,
         condicion = ?,
         monto = ?
       WHERE id = ?
-    `, [nombre, paterno, materno, documento, correo || '', area, condicion, monto || 0, id]);
+    `, [nombre, paterno, materno, documento, correo || '', celular || '', area, condicion, monto || 0, id]);
 
     connection.release();
 
