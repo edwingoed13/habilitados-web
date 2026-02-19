@@ -353,6 +353,9 @@
     </footer>
 
     <script>
+        const API_BASE = window.location.origin;
+        let pagosValidados = [];
+
         // Actualizar DNI en el modal del voucher
         function updateVoucherDNI() {
             const dni = document.getElementById('nro_documento').value;
@@ -363,9 +366,17 @@
         }
 
         // Abrir modal
-        function openModal(modalId) {
+        async function openModal(modalId) {
+            const dni = document.getElementById('nro_documento').value;
+
+            if (!dni || dni.length < 8) {
+                alert('Por favor ingresa tu número de documento primero.');
+                return;
+            }
+
             document.getElementById(modalId).classList.remove('hidden');
-            updateVoucherDNI(); // Actualizar DNI al abrir
+            updateVoucherDNI();
+            await cargarResumenPagos(dni);
         }
 
         // Cerrar modal
@@ -430,8 +441,10 @@
             }
         }
 
-        // Validar voucher (placeholder - implementar cuando esté el sistema de pagos)
-        function validarVoucher() {
+        // Validar voucher
+        async function validarVoucher() {
+            const tipo_pago = document.getElementById('selectPago').value;
+            const nro_documento = document.getElementById('documento').value;
             const secuencia = document.getElementById('secuencia').value;
             const fecha = document.getElementById('fecha').value;
             const monto = document.getElementById('monto').value;
@@ -442,10 +455,166 @@
                 return;
             }
 
-            // TODO: Aquí iría la lógica de validación con el backend
-            alert('Funcionalidad de validación estará disponible cuando el sistema de pagos esté activo.');
-            console.log('Datos a validar:', { secuencia, fecha, monto, archivo: file.name });
+            const btnValidar = document.getElementById('btnValidarVoucher');
+            btnValidar.disabled = true;
+            btnValidar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+
+            try {
+                const formData = new FormData();
+                formData.append('tipo_pago', tipo_pago);
+                formData.append('nro_documento', nro_documento);
+                formData.append('secuencia', secuencia);
+                formData.append('fecha', fecha);
+                formData.append('monto', monto);
+                formData.append('archivo', file);
+
+                const response = await fetch(`${API_BASE}/api/extemporaneo/validar-voucher`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Voucher validado correctamente');
+                    await cargarResumenPagos(nro_documento);
+                    limpiarFormularioVoucher();
+                } else {
+                    alert('❌ Error al validar voucher: ' + (data.detail || data.error || 'Error desconocido'));
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al validar voucher');
+            } finally {
+                btnValidar.disabled = false;
+                btnValidar.innerHTML = '<i class="fa-solid fa-shield-check"></i> Validar';
+            }
         }
+
+        // Cargar resumen de pagos
+        async function cargarResumenPagos(dni) {
+            try {
+                const response = await fetch(`${API_BASE}/api/extemporaneo/resumen-pagos/${dni}`);
+
+                if (!response.ok) {
+                    console.log('No hay pagos validados para este DNI');
+                    return;
+                }
+
+                const data = await response.json();
+                pagosValidados = data.pagos || [];
+
+                if (pagosValidados.length > 0) {
+                    mostrarPagosValidados(pagosValidados);
+                }
+
+            } catch (error) {
+                console.error('Error al cargar resumen de pagos:', error);
+            }
+        }
+
+        // Mostrar pagos validados en la tabla
+        function mostrarPagosValidados(pagos) {
+            const seccionPagos = document.getElementById('pagos-validados');
+            const listaPagos = document.getElementById('listaPagos');
+            const botonEnviar = document.getElementById('botonEnviar');
+
+            seccionPagos.classList.remove('hidden');
+
+            let html = '';
+            pagos.forEach((pago, index) => {
+                const estadoClass = pago.validado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                const estadoTexto = pago.validado ? 'Validado' : 'Pendiente';
+
+                html += `
+                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}">
+                        <td class="p-3 text-sm">${index + 1}</td>
+                        <td class="p-3 text-sm">${pago.fecha}</td>
+                        <td class="p-3 text-sm font-semibold">S/ ${parseFloat(pago.monto).toFixed(2)}</td>
+                        <td class="p-3 text-sm font-mono">${pago.secuencia}</td>
+                        <td class="p-3">
+                            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold ${estadoClass}">
+                                ${estadoTexto}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            listaPagos.innerHTML = html;
+
+            // Habilitar botón enviar si hay al menos un pago validado
+            const hayPagoValidado = pagos.some(p => p.validado);
+            if (hayPagoValidado) {
+                botonEnviar.classList.remove('hidden');
+            }
+        }
+
+        // Limpiar formulario voucher
+        function limpiarFormularioVoucher() {
+            document.getElementById('secuencia').value = '';
+            document.getElementById('fecha').value = '';
+            document.getElementById('monto').value = '';
+            document.getElementById('file').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('filePreview').innerHTML = '';
+        }
+
+        // Enviar inscripción
+        document.getElementById('botonEnviar').addEventListener('click', async function() {
+            const formData = {
+                tipo_documento: document.getElementById('tipoDocumento').value,
+                nro_documento: document.getElementById('nro_documento').value,
+                nombres: document.getElementById('nombres').value,
+                paterno: document.getElementById('apellido_paterno').value,
+                materno: document.getElementById('apellido_materno').value,
+                celular: document.getElementById('celular').value,
+                email: document.getElementById('email').value,
+                area: parseInt(document.getElementById('area').value),
+                condicion: parseInt(document.getElementById('condicion').value)
+            };
+
+            // Validar campos
+            if (!formData.tipo_documento || !formData.nro_documento || !formData.nombres ||
+                !formData.paterno || !formData.materno || !formData.celular ||
+                !formData.email || !formData.area || !formData.condicion) {
+                alert('Por favor completa todos los campos del formulario.');
+                return;
+            }
+
+            const btnEnviar = this;
+            btnEnviar.disabled = true;
+            btnEnviar.innerHTML = '<span class="inline-flex items-center justify-center gap-3"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/extemporaneo/inscripcion`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Inscripción enviada correctamente. Revisa tu correo electrónico.');
+                    document.getElementById('formInscripcion').reset();
+                    document.getElementById('pagos-validados').classList.add('hidden');
+                    btnEnviar.classList.add('hidden');
+                } else {
+                    alert('❌ Error al enviar inscripción: ' + (data.detail || data.error || 'Error desconocido'));
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al enviar inscripción');
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.innerHTML = '<span class="inline-flex items-center justify-center gap-3"><i class="fa-solid fa-paper-plane"></i> Enviar inscripción</span>';
+            }
+        });
 
         // Revelar elementos al scroll
         const revealElements = document.querySelectorAll('.reveal');
