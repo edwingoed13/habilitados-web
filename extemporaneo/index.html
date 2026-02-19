@@ -490,19 +490,24 @@
                     body: formData
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (response.ok) {
                     alert('✅ Voucher validado correctamente');
                     await cargarResumenPagos(nro_documento);
                     limpiarFormularioVoucher();
                 } else {
-                    alert('❌ Error al validar voucher: ' + (data.detail || data.error || 'Error desconocido'));
+                    console.error('❌ Error completo:', data);
+                    alert('❌ Error al validar voucher: ' + JSON.stringify(data, null, 2));
                 }
 
             } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Error de conexión al validar voucher');
+                console.error('❌ Error completo:', error);
+                alert('❌ Error de conexión al validar voucher: ' + error.message);
             } finally {
                 btnValidar.disabled = false;
                 btnValidar.innerHTML = '<i class="fa-solid fa-shield-check"></i> Validar';
