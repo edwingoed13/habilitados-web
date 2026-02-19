@@ -830,13 +830,33 @@ app.get('/api/matriculas/generar-token/:matricula_id', async (req, res) => {
 // Proxy GET: obtiene el listado completo desde el sistema Laravel
 app.get('/api/listado-curso/inscritos', async (_req, res) => {
   try {
-    const response = await fetch('https://sistemas.cepreuna.edu.pe/api/curso-taller/inscripciones');
-    if (!response.ok) throw new Error(`Error externo: ${response.status}`);
+    console.log('🔄 Solicitando listado a Laravel...');
+    const response = await fetch('https://sistemas.cepreuna.edu.pe/api/curso-taller/inscripciones', {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Habilitados-Web/1.0'
+      },
+      timeout: 10000 // 10 segundos de timeout
+    });
+
+    console.log(`📡 Respuesta Laravel: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error de API externa:', errorText);
+      throw new Error(`Error externo: ${response.status} - ${errorText.substring(0, 200)}`);
+    }
+
     const data = await response.json();
+    console.log('✅ Datos recibidos correctamente');
     res.json(data);
   } catch (error) {
-    console.error('Error listado-curso inscritos:', error);
-    res.status(500).json({ error: 'Error al obtener listado', message: error.message });
+    console.error('❌ Error listado-curso inscritos:', error);
+    res.status(500).json({
+      error: 'Error al obtener listado',
+      message: error.message,
+      details: error.cause?.message || 'Sin detalles adicionales'
+    });
   }
 });
 
@@ -848,21 +868,28 @@ app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
       return res.status(400).json({ error: 'ID inválido.' });
     }
 
+    console.log(`🔄 Actualizando inscripción ${id}...`);
     const response = await fetch(`https://sistemas.cepreuna.edu.pe/api/inscripciones/curso/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(req.body),
+      timeout: 10000
     });
 
+    console.log(`📡 Respuesta actualización: ${response.status} ${response.statusText}`);
     const data = await response.json();
     res.status(response.status).json(data);
 
   } catch (error) {
-    console.error('Error listado-curso actualizar:', error);
-    res.status(500).json({ error: 'Error al actualizar inscripción', message: error.message });
+    console.error('❌ Error listado-curso actualizar:', error);
+    res.status(500).json({
+      error: 'Error al actualizar inscripción',
+      message: error.message,
+      details: error.cause?.message || 'Sin detalles adicionales'
+    });
   }
 });
 
