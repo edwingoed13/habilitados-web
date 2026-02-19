@@ -896,7 +896,7 @@ app.get('/api/listado-curso/inscritos', async (_req, res) => {
   }
 });
 
-// PUT: actualiza un inscrito en la base de datos local
+// PUT: Proxy - actualiza un inscrito en el sistema Laravel (porque usuario vista no tiene permisos UPDATE)
 app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -904,60 +904,20 @@ app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
       return res.status(400).json({ error: 'ID inválido.' });
     }
 
-    const { nombre, paterno, materno, documento, celular, correo, area, condicion, monto } = req.body;
-
-    // Validaciones básicas
-    if (!nombre || !paterno || !materno || !documento || !area || !condicion) {
-      return res.status(400).json({
-        status: false,
-        message: 'Faltan campos requeridos',
-        errors: {
-          general: ['Los campos nombre, paterno, materno, documento, área y condición son obligatorios']
-        }
-      });
-    }
-
-    console.log(`🔄 Actualizando inscripción ${id} en base de datos...`);
-    const connection = await pool.getConnection();
-
-    // Verificar que existe el registro
-    const [[existe]] = await connection.query(
-      'SELECT id FROM inscripcion_curso_tallers WHERE id = ?',
-      [id]
-    );
-
-    if (!existe) {
-      connection.release();
-      return res.status(404).json({
-        status: false,
-        message: 'Inscripción no encontrada'
-      });
-    }
-
-    // Actualizar el registro
-    await connection.query(`
-      UPDATE inscripcion_curso_tallers
-      SET
-        nombres = ?,
-        paterno = ?,
-        materno = ?,
-        nro_documento = ?,
-        email = ?,
-        celular = ?,
-        area = ?,
-        condicion = ?,
-        monto = ?
-      WHERE id = ?
-    `, [nombre, paterno, materno, documento, correo || '', celular || '', area, condicion, monto || 0, id]);
-
-    connection.release();
-
-    console.log(`✅ Inscripción ${id} actualizada correctamente`);
-
-    res.json({
-      status: true,
-      message: 'Inscripción actualizada correctamente'
+    console.log(`🔄 Actualizando inscripción ${id} vía API Laravel...`);
+    const response = await fetch(`https://sistemas.cepreuna.edu.pe/api/inscripciones/curso/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+      timeout: 10000
     });
+
+    console.log(`📡 Respuesta actualización: ${response.status} ${response.statusText}`);
+    const data = await response.json();
+    res.status(response.status).json(data);
 
   } catch (error) {
     console.error('❌ Error listado-curso actualizar:', error);
