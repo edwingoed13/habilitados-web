@@ -466,13 +466,23 @@
             btnValidar.disabled = true;
             btnValidar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
 
+            // Logging para debug
+            console.log('Datos a enviar:', {
+                tipo_pago,
+                nro_documento,
+                secuencia,
+                fecha,
+                monto,
+                archivo: file.name
+            });
+
             try {
                 const formData = new FormData();
                 formData.append('tipo_pago', tipo_pago);
-                formData.append('nro_documento', nro_documento);
-                formData.append('secuencia', secuencia);
+                formData.append('nro_documento', nro_documento.trim());
+                formData.append('secuencia', secuencia.trim());
                 formData.append('fecha', fecha);
-                formData.append('monto', monto);
+                formData.append('monto', monto.trim());
                 formData.append('archivo', file);
 
                 const response = await fetch(`${API_BASE}/api/extemporaneo/validar-voucher`, {

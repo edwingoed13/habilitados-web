@@ -1064,29 +1064,37 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
     // Crear FormData para enviar a la API externa
     const FormData = (await import('form-data')).default;
     const formData = new FormData();
-    formData.append('tipo_pago', tipo_pago);  // Ya es string correcto (VENTANILLA_BN o PAGALO_PE)
-    formData.append('nro_documento', nro_documento);
-    formData.append('secuencia', secuencia);
-    formData.append('fecha', fecha);
-    formData.append('monto', String(monto));  // Asegurar que sea string
+
+    // Asegurar que todos los campos sean strings y estén limpios
+    formData.append('tipo_pago', String(tipo_pago).trim());
+    formData.append('nro_documento', String(nro_documento).trim());
+    formData.append('secuencia', String(secuencia).trim());
+    formData.append('fecha', String(fecha).trim());
+    formData.append('monto', String(monto).trim());
+
+    // Adjuntar el archivo
     formData.append('archivo', archivo.buffer, {
-      filename: archivo.originalname,
-      contentType: archivo.mimetype
+      filename: archivo.originalname || 'voucher.jpg',
+      contentType: archivo.mimetype || 'image/jpeg'
     });
 
     console.log('📤 Enviando a API externa con FormData:', {
-      tipo_pago,
-      nro_documento,
-      secuencia,
-      fecha,
-      monto,
-      filename: archivo.originalname
+      tipo_pago: String(tipo_pago).trim(),
+      nro_documento: String(nro_documento).trim(),
+      secuencia: String(secuencia).trim(),
+      fecha: String(fecha).trim(),
+      monto: String(monto).trim(),
+      filename: archivo.originalname,
+      filesize: archivo.size,
+      mimetype: archivo.mimetype
     });
 
     const response = await fetch('https://prepagovalido.waready.org.pe/api/v1/vouchers/validate', {
       method: 'POST',
       body: formData,
-      headers: formData.getHeaders()
+      headers: {
+        ...formData.getHeaders()
+      }
     });
 
     const data = await response.json();
