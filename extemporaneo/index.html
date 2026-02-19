@@ -563,12 +563,22 @@
 
         // Enviar inscripción
         document.getElementById('botonEnviar').addEventListener('click', async function() {
+            // Mapear tipo documento
+            const tipoDocMap = {
+                '1': 'DNI',
+                '2': 'PASAPORTE',
+                '3': 'CARNET_EXTRANJERIA',
+                '4': 'CEDULA'
+            };
+
+            const tipoDocValue = document.getElementById('tipoDocumento').value;
+
             const formData = {
-                tipo_documento: document.getElementById('tipoDocumento').value,
+                tipo_documento: tipoDocMap[tipoDocValue] || 'DNI',
                 nro_documento: document.getElementById('nro_documento').value,
-                nombres: document.getElementById('nombres').value,
-                paterno: document.getElementById('apellido_paterno').value,
-                materno: document.getElementById('apellido_materno').value,
+                nombres: document.getElementById('nombres').value.toUpperCase(),
+                paterno: document.getElementById('apellido_paterno').value.toUpperCase(),
+                materno: document.getElementById('apellido_materno').value.toUpperCase(),
                 celular: document.getElementById('celular').value,
                 email: document.getElementById('email').value,
                 area: parseInt(document.getElementById('area').value),
