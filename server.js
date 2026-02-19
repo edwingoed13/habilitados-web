@@ -827,40 +827,76 @@ app.get('/api/matriculas/generar-token/:matricula_id', async (req, res) => {
 
 // ============ ENDPOINTS LISTADO CURSO TALLER 2026 ============
 
-// Proxy GET: obtiene el listado completo desde el sistema Laravel
+// GET: obtiene el listado completo desde la base de datos local
 app.get('/api/listado-curso/inscritos', async (_req, res) => {
   try {
-    console.log('🔄 Solicitando listado a Laravel...');
-    const response = await fetch('https://sistemas.cepreuna.edu.pe/api/curso-taller/inscripciones', {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Habilitados-Web/1.0'
-      },
-      timeout: 10000 // 10 segundos de timeout
+    console.log('🔄 Consultando listado desde base de datos...');
+    const connection = await pool.getConnection();
+
+    // Obtener listado completo
+    const [listado] = await connection.query(`
+      SELECT
+        id,
+        nombres,
+        paterno,
+        materno,
+        nro_documento,
+        email,
+        area,
+        condicion,
+        monto,
+        '' as celular
+      FROM inscripcion_curso_tallers
+      ORDER BY id ASC
+    `);
+
+    // Obtener total
+    const [[{total}]] = await connection.query(`
+      SELECT COUNT(*) as total FROM inscripcion_curso_tallers
+    `);
+
+    // Obtener totales por área
+    const [porArea] = await connection.query(`
+      SELECT area, COUNT(*) as total
+      FROM inscripcion_curso_tallers
+      GROUP BY area
+      ORDER BY area
+    `);
+
+    connection.release();
+
+    console.log(`✅ Datos obtenidos: ${listado.length} registros`);
+
+    res.json({
+      total: parseInt(total) || 0,
+      por_area: porArea.map(a => ({
+        area: parseInt(a.area),
+        total: parseInt(a.total)
+      })),
+      listado: listado.map(item => ({
+        id: item.id,
+        nombres: item.nombres,
+        paterno: item.paterno,
+        materno: item.materno,
+        nro_documento: item.nro_documento,
+        email: item.email || '',
+        area: parseInt(item.area),
+        condicion: parseInt(item.condicion),
+        monto: parseFloat(item.monto) || 0,
+        celular: item.celular || ''
+      }))
     });
 
-    console.log(`📡 Respuesta Laravel: ${response.status} ${response.statusText}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error de API externa:', errorText);
-      throw new Error(`Error externo: ${response.status} - ${errorText.substring(0, 200)}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Datos recibidos correctamente');
-    res.json(data);
   } catch (error) {
     console.error('❌ Error listado-curso inscritos:', error);
     res.status(500).json({
       error: 'Error al obtener listado',
-      message: error.message,
-      details: error.cause?.message || 'Sin detalles adicionales'
+      message: error.message
     });
   }
 });
 
-// Proxy PUT: actualiza un inscrito en el sistema Laravel
+// PUT: actualiza un inscrito en la base de datos local
 app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -868,27 +904,66 @@ app.put('/api/listado-curso/actualizar/:id', async (req, res) => {
       return res.status(400).json({ error: 'ID inválido.' });
     }
 
-    console.log(`🔄 Actualizando inscripción ${id}...`);
-    const response = await fetch(`https://sistemas.cepreuna.edu.pe/api/inscripciones/curso/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(req.body),
-      timeout: 10000
-    });
+    const { nombre, paterno, materno, documento, celular, correo, area, condicion, monto } = req.body;
 
-    console.log(`📡 Respuesta actualización: ${response.status} ${response.statusText}`);
-    const data = await response.json();
-    res.status(response.status).json(data);
+    // Validaciones básicas
+    if (!nombre || !paterno || !materno || !documento || !area || !condicion) {
+      return res.status(400).json({
+        status: false,
+        message: 'Faltan campos requeridos',
+        errors: {
+          general: ['Los campos nombre, paterno, materno, documento, área y condición son obligatorios']
+        }
+      });
+    }
+
+    console.log(`🔄 Actualizando inscripción ${id} en base de datos...`);
+    const connection = await pool.getConnection();
+
+    // Verificar que existe el registro
+    const [[existe]] = await connection.query(
+      'SELECT id FROM inscripcion_curso_tallers WHERE id = ?',
+      [id]
+    );
+
+    if (!existe) {
+      connection.release();
+      return res.status(404).json({
+        status: false,
+        message: 'Inscripción no encontrada'
+      });
+    }
+
+    // Actualizar el registro
+    await connection.query(`
+      UPDATE inscripcion_curso_tallers
+      SET
+        nombres = ?,
+        paterno = ?,
+        materno = ?,
+        nro_documento = ?,
+        email = ?,
+        area = ?,
+        condicion = ?,
+        monto = ?
+      WHERE id = ?
+    `, [nombre, paterno, materno, documento, correo || '', area, condicion, monto || 0, id]);
+
+    connection.release();
+
+    console.log(`✅ Inscripción ${id} actualizada correctamente`);
+
+    res.json({
+      status: true,
+      message: 'Inscripción actualizada correctamente'
+    });
 
   } catch (error) {
     console.error('❌ Error listado-curso actualizar:', error);
     res.status(500).json({
+      status: false,
       error: 'Error al actualizar inscripción',
-      message: error.message,
-      details: error.cause?.message || 'Sin detalles adicionales'
+      message: error.message
     });
   }
 });
