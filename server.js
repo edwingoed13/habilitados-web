@@ -1048,29 +1048,32 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
       });
     }
 
-    // Validar que tipo_pago sea uno de los valores esperados
-    const tiposPagoValidos = ['VENTANILLA_BN', 'PAGALO_PE'];
-    if (!tiposPagoValidos.includes(tipo_pago)) {
+    // La API espera tipo_pago como INTEGER (1 o 2) y monto como NUMBER
+    const tipo_pago_int = parseInt(tipo_pago);
+    const monto_num = parseFloat(monto);
+
+    // Validar que tipo_pago sea 1 o 2
+    if (tipo_pago_int !== 1 && tipo_pago_int !== 2) {
       console.log(`❌ Tipo de pago inválido: ${tipo_pago}`);
       return res.status(400).json({
         error: 'Tipo de pago inválido',
-        detail: `El tipo de pago debe ser uno de: ${tiposPagoValidos.join(', ')}`,
+        detail: 'El tipo de pago debe ser 1 (Ventanilla BN) o 2 (Pagalo.pe)',
         received: tipo_pago
       });
     }
 
-    console.log(`🔄 Validando voucher para DNI: ${nro_documento}, tipo_pago: ${tipo_pago}...`);
+    console.log(`🔄 Validando voucher para DNI: ${nro_documento}, tipo_pago: ${tipo_pago_int} (${tipo_pago_int === 1 ? 'Ventanilla BN' : 'Pagalo.pe'})...`);
 
     // Crear FormData para enviar a la API externa
     const FormData = (await import('form-data')).default;
     const formData = new FormData();
 
-    // Asegurar que todos los campos sean strings y estén limpios
-    formData.append('tipo_pago', String(tipo_pago).trim());
+    // Según OpenAPI spec: tipo_pago=integer, monto=number, resto=string
+    formData.append('tipo_pago', tipo_pago_int);
     formData.append('nro_documento', String(nro_documento).trim());
     formData.append('secuencia', String(secuencia).trim());
     formData.append('fecha', String(fecha).trim());
-    formData.append('monto', String(monto).trim());
+    formData.append('monto', monto_num);
 
     // Adjuntar el archivo
     formData.append('archivo', archivo.buffer, {
@@ -1079,11 +1082,13 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
     });
 
     console.log('📤 Enviando a API externa con FormData:', {
-      tipo_pago: String(tipo_pago).trim(),
+      tipo_pago: tipo_pago_int,
+      tipo_pago_type: typeof tipo_pago_int,
       nro_documento: String(nro_documento).trim(),
       secuencia: String(secuencia).trim(),
       fecha: String(fecha).trim(),
-      monto: String(monto).trim(),
+      monto: monto_num,
+      monto_type: typeof monto_num,
       filename: archivo.originalname,
       filesize: archivo.size,
       mimetype: archivo.mimetype

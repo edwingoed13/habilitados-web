@@ -455,12 +455,9 @@
                 return;
             }
 
-            // Mapear tipo_pago a los valores esperados por la API
-            const tipoPagoMap = {
-                '1': 'VENTANILLA_BN',
-                '2': 'PAGALO_PE'
-            };
-            const tipo_pago = tipoPagoMap[tipo_pago_value] || tipo_pago_value;
+            // La API espera tipo_pago como INTEGER (1 o 2), no string
+            const tipo_pago = parseInt(tipo_pago_value);
+            const monto_num = parseFloat(monto);
 
             const btnValidar = document.getElementById('btnValidarVoucher');
             btnValidar.disabled = true;
@@ -469,20 +466,22 @@
             // Logging para debug
             console.log('Datos a enviar:', {
                 tipo_pago,
+                tipo_pago_type: typeof tipo_pago,
                 nro_documento,
                 secuencia,
                 fecha,
-                monto,
+                monto: monto_num,
+                monto_type: typeof monto_num,
                 archivo: file.name
             });
 
             try {
                 const formData = new FormData();
-                formData.append('tipo_pago', tipo_pago);
+                formData.append('tipo_pago', tipo_pago);  // Integer
                 formData.append('nro_documento', nro_documento.trim());
                 formData.append('secuencia', secuencia.trim());
                 formData.append('fecha', fecha);
-                formData.append('monto', monto.trim());
+                formData.append('monto', monto_num);  // Number
                 formData.append('archivo', file);
 
                 const response = await fetch(`${API_BASE}/api/extemporaneo/validar-voucher`, {
