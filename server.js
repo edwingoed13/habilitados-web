@@ -2,6 +2,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
@@ -1009,6 +1010,131 @@ app.get('/api/curso2026/buscar/:dni', async (req, res) => {
   } catch (error) {
     console.error('Error búsqueda curso2026:', error);
     res.status(500).json({ error: 'Error al buscar inscripción', message: error.message });
+  }
+});
+
+// ============ ENDPOINTS EXTEMPORÁNEOS ============
+
+// Configurar multer para subir archivos
+const upload = multer({ storage: multer.memoryStorage() });
+
+// 1. POST: Validar voucher (proxy a API externa)
+app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (req, res) => {
+  try {
+    const { tipo_pago, nro_documento, secuencia, fecha, monto } = req.body;
+    const archivo = req.file;
+
+    if (!archivo) {
+      return res.status(400).json({ error: 'Archivo es requerido' });
+    }
+
+    console.log(`🔄 Validando voucher para DNI: ${nro_documento}...`);
+
+    // Crear FormData para enviar a la API externa
+    const FormData = (await import('form-data')).default;
+    const formData = new FormData();
+    formData.append('tipo_pago', tipo_pago);
+    formData.append('nro_documento', nro_documento);
+    formData.append('secuencia', secuencia);
+    formData.append('fecha', fecha);
+    formData.append('monto', monto);
+    formData.append('archivo', archivo.buffer, {
+      filename: archivo.originalname,
+      contentType: archivo.mimetype
+    });
+
+    const response = await fetch('https://prepagovalido.waready.org.pe/api/v1/vouchers/validate', {
+      method: 'POST',
+      body: formData,
+      headers: formData.getHeaders()
+    });
+
+    const data = await response.json();
+    console.log(`📡 Respuesta validación voucher: ${response.status}`);
+
+    res.status(response.status).json(data);
+
+  } catch (error) {
+    console.error('❌ Error validar voucher:', error);
+    res.status(500).json({
+      error: 'Error al validar voucher',
+      message: error.message
+    });
+  }
+});
+
+// 2. GET: Resumen de pagos por DNI (proxy a API externa)
+app.get('/api/extemporaneo/resumen-pagos/:nro_documento', async (req, res) => {
+  try {
+    const { nro_documento } = req.params;
+
+    if (!nro_documento || !/^\d+$/.test(nro_documento)) {
+      return res.status(400).json({ error: 'Número de documento inválido' });
+    }
+
+    console.log(`🔄 Consultando resumen de pagos para DNI: ${nro_documento}...`);
+
+    const response = await fetch(`https://prepagovalido.waready.org.pe/api/v1/pagos/resumen/${nro_documento}`);
+    const data = await response.json();
+
+    console.log(`📡 Respuesta resumen pagos: ${response.status}`);
+
+    res.status(response.status).json(data);
+
+  } catch (error) {
+    console.error('❌ Error resumen pagos:', error);
+    res.status(500).json({
+      error: 'Error al obtener resumen de pagos',
+      message: error.message
+    });
+  }
+});
+
+// 3. POST: Crear inscripción (proxy a API externa)
+app.post('/api/extemporaneo/inscripcion', async (req, res) => {
+  try {
+    const { tipo_documento, nro_documento, nombres, paterno, materno, celular, email, area, condicion } = req.body;
+
+    // Validaciones básicas
+    if (!tipo_documento || !nro_documento || !nombres || !paterno || !materno || !celular || !email || !area || !condicion) {
+      return res.status(400).json({
+        error: 'Faltan campos requeridos',
+        detail: 'Todos los campos son obligatorios'
+      });
+    }
+
+    console.log(`🔄 Creando inscripción para DNI: ${nro_documento}...`);
+
+    const response = await fetch('https://prepagovalido.waready.org.pe/api/v1/inscripciones', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        tipo_documento,
+        nro_documento,
+        nombres,
+        paterno,
+        materno,
+        celular,
+        email,
+        area: parseInt(area),
+        condicion: parseInt(condicion)
+      })
+    });
+
+    const data = await response.json();
+    console.log(`📡 Respuesta inscripción: ${response.status}`);
+
+    res.status(response.status).json(data);
+
+  } catch (error) {
+    console.error('❌ Error crear inscripción:', error);
+    res.status(500).json({
+      error: 'Error al crear inscripción',
+      message: error.message
+    });
   }
 });
 
