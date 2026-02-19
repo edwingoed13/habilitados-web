@@ -1016,7 +1016,10 @@ app.get('/api/curso2026/buscar/:dni', async (req, res) => {
 // ============ ENDPOINTS EXTEMPORÁNEOS ============
 
 // Configurar multer para subir archivos
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
+});
 
 // 1. POST: Validar voucher (proxy a API externa)
 app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (req, res) => {
@@ -1024,8 +1027,23 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
     const { tipo_pago, nro_documento, secuencia, fecha, monto } = req.body;
     const archivo = req.file;
 
+    console.log('📥 Request recibido:', {
+      tipo_pago,
+      nro_documento,
+      secuencia,
+      fecha,
+      monto,
+      archivo_recibido: !!archivo
+    });
+
     if (!archivo) {
-      return res.status(400).json({ error: 'Archivo es requerido' });
+      return res.status(400).json({
+        error: 'Archivo es requerido',
+        debug: {
+          body_keys: Object.keys(req.body),
+          file_received: !!req.file
+        }
+      });
     }
 
     console.log(`🔄 Validando voucher para DNI: ${nro_documento}...`);
