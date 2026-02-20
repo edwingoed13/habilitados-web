@@ -7,25 +7,25 @@
       "config": {
         "maxDuration": 30
       }
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "curso-2026/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "listado-curso/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "extemporaneo/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/curso-2026",
-      "dest": "/curso-2026/index.html"
-    },
-    {
-      "src": "/listado-curso",
-      "dest": "/listado-curso/index.html"
-    },
-    {
-      "src": "/extemporaneo",
-      "dest": "/extemporaneo/index.html"
-    },
     {
       "src": "/api/(.*)",
       "dest": "server.js"
@@ -35,8 +35,20 @@
       "dest": "server.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "server.js"
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/curso-2026/?",
+      "dest": "/curso-2026/index.html"
+    },
+    {
+      "src": "/listado-curso/?",
+      "dest": "/listado-curso/index.html"
+    },
+    {
+      "src": "/extemporaneo/?",
+      "dest": "/extemporaneo/index.html"
     }
   ]
 }
