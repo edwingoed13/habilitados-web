@@ -634,10 +634,17 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('✅ Inscripción enviada correctamente. Revisa tu correo electrónico.');
-                    document.getElementById('formInscripcion').reset();
-                    document.getElementById('pagos-validados').classList.add('hidden');
-                    btnEnviar.classList.add('hidden');
+                    // Guardar información para la página de confirmación
+                    localStorage.setItem('extemporaneo_inscripcion', JSON.stringify({
+                        area: formData.area,
+                        nombres: formData.nombres,
+                        paterno: formData.paterno,
+                        materno: formData.materno,
+                        nro_documento: formData.nro_documento
+                    }));
+
+                    // Redirigir a página de confirmación
+                    window.location.href = '/extemporaneo/confirmacion.html';
                 } else {
                     alert('❌ Error al enviar inscripción: ' + (data.detail || data.error || 'Error desconocido'));
                 }
