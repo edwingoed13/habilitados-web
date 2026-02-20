@@ -561,18 +561,6 @@
             btnValidar.disabled = true;
             btnValidar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
 
-            // Logging para debug
-            console.log('Datos a enviar:', {
-                tipo_pago,
-                tipo_pago_type: typeof tipo_pago,
-                nro_documento,
-                secuencia,
-                fecha,
-                monto: monto_num,
-                monto_type: typeof monto_num,
-                archivo: file.name
-            });
-
             try {
                 const formData = new FormData();
                 formData.append('tipo_pago', tipo_pago);  // Integer
@@ -587,11 +575,7 @@
                     body: formData
                 });
 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
                 const data = await response.json();
-                console.log('Response data:', data);
 
                 if (response.ok) {
                     showToast('Voucher validado correctamente', 'success');
@@ -599,7 +583,6 @@
                     limpiarFormularioVoucher();
                     closeModal('voucherModal'); // Cerrar el modal automáticamente
                 } else {
-                    console.error('❌ Error completo:', data);
 
                     // Extraer mensaje de error correctamente
                     let errorMsg = 'Error desconocido';
@@ -615,7 +598,6 @@
                 }
 
             } catch (error) {
-                console.error('❌ Error completo:', error);
                 showToast('Error de conexión al validar voucher: ' + error.message, 'error');
             } finally {
                 btnValidar.disabled = false;
@@ -629,7 +611,6 @@
                 const response = await fetch(`${API_BASE}/api/extemporaneo/resumen-pagos/${dni}`);
 
                 if (!response.ok) {
-                    console.log('No hay pagos validados para este DNI');
                     return;
                 }
 
@@ -641,7 +622,7 @@
                 }
 
             } catch (error) {
-                console.error('Error al cargar resumen de pagos:', error);
+                // Silenciar error de carga de resumen de pagos
             }
         }
 
@@ -777,7 +758,6 @@
                 }
 
             } catch (error) {
-                console.error('Error:', error);
                 showToast('Error de conexión al enviar inscripción', 'error');
             } finally {
                 btnEnviar.disabled = false;
