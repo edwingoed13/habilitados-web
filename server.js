@@ -1070,31 +1070,27 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
 
     console.log(`🔄 Validando voucher para DNI: ${nro_documento}, tipo_pago: ${tipo_pago_int} (${tipo_pago_int === 1 ? 'Ventanilla BN' : 'Pagalo.pe'})...`);
 
-    // Crear FormData para enviar a la API externa
-    const FormData = (await import('form-data')).default;
+    // Crear FormData usando FormData global nativo de Node.js 18+
+    // Crear un Blob del archivo
+    const fileBlob = new Blob([archivo.buffer], { type: archivo.mimetype });
+    const file = new File([fileBlob], archivo.originalname, { type: archivo.mimetype });
+
     const formData = new FormData();
 
-    // Según OpenAPI spec: tipo_pago=integer, monto=number, resto=string
-    formData.append('tipo_pago', tipo_pago_int);
+    // FormData nativo debería manejar los tipos correctamente
+    formData.append('tipo_pago', tipo_pago_int.toString());
     formData.append('nro_documento', String(nro_documento).trim());
     formData.append('secuencia', String(secuencia).trim());
     formData.append('fecha', String(fecha).trim());
-    formData.append('monto', monto_num);
+    formData.append('monto', monto_num.toString());
+    formData.append('archivo', file, archivo.originalname);
 
-    // Adjuntar el archivo
-    formData.append('archivo', archivo.buffer, {
-      filename: archivo.originalname || 'voucher.jpg',
-      contentType: archivo.mimetype || 'image/jpeg'
-    });
-
-    console.log('📤 Enviando a API externa con FormData:', {
-      tipo_pago: tipo_pago_int,
-      tipo_pago_type: typeof tipo_pago_int,
+    console.log('📤 Enviando a API externa con FormData nativo:', {
+      tipo_pago: tipo_pago_int.toString(),
       nro_documento: String(nro_documento).trim(),
       secuencia: String(secuencia).trim(),
       fecha: String(fecha).trim(),
-      monto: monto_num,
-      monto_type: typeof monto_num,
+      monto: monto_num.toString(),
       filename: archivo.originalname,
       filesize: archivo.size,
       mimetype: archivo.mimetype
@@ -1102,10 +1098,8 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
 
     const response = await fetch('https://prepagovalido.waready.org.pe/api/v1/vouchers/validate', {
       method: 'POST',
-      body: formData,
-      headers: {
-        ...formData.getHeaders()
-      }
+      body: formData
+      // No agregar headers manualmente con FormData nativo
     });
 
     const data = await response.json();
