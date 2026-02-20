@@ -600,7 +600,17 @@
                     closeModal('voucherModal'); // Cerrar el modal automáticamente
                 } else {
                     console.error('❌ Error completo:', data);
-                    const errorMsg = data.detail || data.error || 'Error desconocido';
+
+                    // Extraer mensaje de error correctamente
+                    let errorMsg = 'Error desconocido';
+                    if (typeof data.detail === 'string') {
+                        errorMsg = data.detail;
+                    } else if (typeof data.error === 'string') {
+                        errorMsg = data.error;
+                    } else if (data.detail && typeof data.detail === 'object') {
+                        errorMsg = JSON.stringify(data.detail);
+                    }
+
                     showToast(errorMsg, 'error', 7000);
                 }
 
@@ -744,8 +754,26 @@
                     // Redirigir a página de confirmación
                     window.location.href = '/extemporaneo/confirmacion.html';
                 } else {
-                    const errorMsg = data.detail || data.error || 'Error desconocido';
-                    showToast(errorMsg, 'error', 7000);
+                    // Extraer mensaje de error correctamente
+                    let errorMsg = 'Error desconocido';
+
+                    if (typeof data.detail === 'string') {
+                        errorMsg = data.detail;
+                    } else if (typeof data.error === 'string') {
+                        errorMsg = data.error;
+                    } else if (data.detail && Array.isArray(data.detail)) {
+                        // Error de validación de FastAPI
+                        errorMsg = data.detail.map(err => err.msg || err.message).join(', ');
+                    } else if (data.detail && typeof data.detail === 'object') {
+                        errorMsg = JSON.stringify(data.detail);
+                    }
+
+                    // Personalizar mensajes comunes
+                    if (errorMsg.includes('duplicate') || errorMsg.includes('duplicado') || errorMsg.includes('ya existe')) {
+                        errorMsg = `Este DNI ya se encuentra registrado. Si necesitas actualizar tu información, contacta al responsable de tu área.`;
+                    }
+
+                    showToast(errorMsg, 'error', 8000);
                 }
 
             } catch (error) {
