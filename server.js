@@ -1027,16 +1027,22 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
     const { tipo_pago, nro_documento, secuencia, fecha, monto } = req.body;
     const archivo = req.file;
 
-    console.log('📥 Request recibido:', {
-      tipo_pago,
-      nro_documento,
-      secuencia,
-      fecha,
-      monto,
-      archivo_recibido: !!archivo,
-      archivo_size: archivo ? archivo.size : 0,
-      archivo_mimetype: archivo ? archivo.mimetype : null
-    });
+    const debugInfo = {
+      received: {
+        tipo_pago,
+        tipo_pago_type: typeof tipo_pago,
+        nro_documento,
+        secuencia,
+        fecha,
+        monto,
+        monto_type: typeof monto,
+        archivo_recibido: !!archivo,
+        archivo_size: archivo ? archivo.size : 0,
+        archivo_mimetype: archivo ? archivo.mimetype : null
+      }
+    };
+
+    console.log('📥 Request recibido:', debugInfo.received);
 
     if (!archivo) {
       return res.status(400).json({
@@ -1103,7 +1109,25 @@ app.post('/api/extemporaneo/validar-voucher', upload.single('archivo'), async (r
     });
 
     const data = await response.json();
-    console.log(`📡 Respuesta validación voucher: ${response.status}`);
+    console.log(`📡 Respuesta validación voucher: ${response.status}`, data);
+
+    // Si es error, agregar debug info
+    if (!response.ok) {
+      debugInfo.sent_to_api = {
+        tipo_pago: tipo_pago_int,
+        nro_documento: String(nro_documento).trim(),
+        secuencia: String(secuencia).trim(),
+        fecha: String(fecha).trim(),
+        monto: monto_num,
+        archivo_name: archivo.originalname
+      };
+      debugInfo.api_response = data;
+
+      return res.status(response.status).json({
+        ...data,
+        _debug: debugInfo
+      });
+    }
 
     res.status(response.status).json(data);
 
