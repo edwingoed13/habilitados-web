@@ -547,13 +547,15 @@
 
             let html = '';
             pagos.forEach((pago, index) => {
-                const estadoClass = pago.validado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-                const estadoTexto = pago.validado ? 'Validado' : 'Pendiente';
+                // estado: 2 = Validado, otros = Pendiente
+                const esValidado = pago.estado === 2;
+                const estadoClass = esValidado ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                const estadoTexto = pago.estado_desc || (esValidado ? 'Validado' : 'Pendiente');
 
                 html += `
                     <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}">
                         <td class="p-3 text-sm">${index + 1}</td>
-                        <td class="p-3 text-sm">${pago.fecha}</td>
+                        <td class="p-3 text-sm">${pago.fecha_pago}</td>
                         <td class="p-3 text-sm font-semibold">S/ ${parseFloat(pago.monto).toFixed(2)}</td>
                         <td class="p-3 text-sm font-mono">${pago.secuencia}</td>
                         <td class="p-3">
@@ -567,8 +569,8 @@
 
             listaPagos.innerHTML = html;
 
-            // Habilitar botón enviar si hay al menos un pago validado
-            const hayPagoValidado = pagos.some(p => p.validado);
+            // Habilitar botón enviar si hay al menos un pago validado (estado === 2)
+            const hayPagoValidado = pagos.some(p => p.estado === 2);
             if (hayPagoValidado) {
                 botonEnviar.classList.remove('hidden');
             }
