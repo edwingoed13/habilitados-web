@@ -499,9 +499,11 @@
                     alert('✅ Voucher validado correctamente');
                     await cargarResumenPagos(nro_documento);
                     limpiarFormularioVoucher();
+                    closeModal('voucherModal'); // Cerrar el modal automáticamente
                 } else {
                     console.error('❌ Error completo:', data);
-                    alert('❌ Error al validar voucher: ' + JSON.stringify(data, null, 2));
+                    const errorMsg = data.detail || data.error || 'Error desconocido';
+                    alert('❌ Error al validar voucher: ' + errorMsg);
                 }
 
             } catch (error) {
