@@ -1,35 +1,9 @@
 {
-  "version": 2,
   "functions": {
     "server.js": {
       "maxDuration": 30
     }
   },
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["**"]
-      }
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "curso-2026/index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "listado-curso/index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "extemporaneo/index.html",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
       "src": "/",
