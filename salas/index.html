@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta de Sala — CEPREUNA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 min-h-screen font-sans flex items-center justify-center p-4">
+
+  <div class="w-full max-w-2xl">
+    <!-- HEADER -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2">CEPREUNA</h1>
+      <p class="text-blue-200 text-lg">Consulta tu Sala y Tareas</p>
+    </div>
+
+    <!-- CARD PRINCIPAL -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <!-- Buscador -->
+      <div class="p-6 sm:p-8">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
+          <h2 class="text-lg font-semibold text-gray-800">Ingresa tu DNI</h2>
+        </div>
+
+        <form id="formBuscar" onsubmit="buscarPorDNI(event)" class="space-y-4">
+          <div>
+            <label for="inputDNI" class="block text-sm font-medium text-gray-600 mb-2">Número de DNI</label>
+            <input
+              id="inputDNI"
+              type="text"
+              required
+              maxlength="8"
+              pattern="[0-9]{8}"
+              placeholder="Ej: 12345678"
+              class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btnBuscar"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3 font-medium transition flex items-center justify-center gap-2"
+          >
+            <svg id="iconBuscar" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Buscar
+          </button>
+        </form>
+
+        <!-- Mensaje de error -->
+        <div id="mensajeError" class="hidden mt-4 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700"></div>
+      </div>
+
+      <!-- Resultado -->
+      <div id="resultado" class="hidden border-t border-gray-100">
+        <div class="p-6 sm:p-8 space-y-6">
+
+          <!-- Datos del estudiante -->
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-indigo-900 uppercase tracking-wide mb-3">Datos de Inscripción</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-gray-600 text-sm">Nombre:</span>
+                <span id="resNombre" class="text-gray-900 font-medium text-sm text-right"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 text-sm">DNI:</span>
+                <span id="resDNI" class="text-gray-900 font-mono text-sm"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 text-sm">Área:</span>
+                <span id="resArea" class="text-gray-900 font-medium text-sm"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sala Google Meet -->
+          <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-blue-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Sala Google Meet - Sábado
+            </h3>
+            <div class="space-y-3">
+              <div class="bg-white rounded-lg p-3 border border-blue-100">
+                <p class="text-xs text-gray-500 mb-1">Link de reunión:</p>
+                <a href="https://meet.google.com/dks-ifrv-ehj" target="_blank"
+                   class="text-blue-600 hover:text-blue-700 font-medium text-sm break-all underline">
+                  https://meet.google.com/dks-ifrv-ehj
+                </a>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div class="bg-white rounded-lg p-3 border border-blue-100">
+                  <p class="text-xs text-gray-500 mb-1">Primera parte:</p>
+                  <p class="font-semibold text-gray-800">10:00 AM - 1:00 PM</p>
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-blue-100">
+                  <p class="text-xs text-gray-500 mb-1">Receso:</p>
+                  <p class="font-semibold text-gray-800">1:00 PM - 3:00 PM</p>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg p-3 border border-blue-100">
+                <p class="text-xs text-gray-500 mb-1">Segunda parte:</p>
+                <p class="font-semibold text-gray-800">3:00 PM - 6:00 PM</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tareas por área -->
+          <div id="contenedorTareas" class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-green-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Tareas de tu Área
+            </h3>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <p class="text-amber-800 text-xs font-medium flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Plazo: Hasta el lunes
+              </p>
+            </div>
+            <a id="linkTarea" href="#" target="_blank"
+               class="block w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-medium transition text-center">
+              Abrir Formulario de Tareas
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-6 text-blue-200 text-xs">
+      CEPREUNA &mdash; Curso Taller 2026
+    </div>
+  </div>
+
+<script>
+  const API_BASE = window.location.origin;
+  const API_LISTADO = `${API_BASE}/api/listado-curso/inscritos`;
+  const API_INSCRIPCIONES = 'https://prepagovalido.waready.org.pe/api/v1/inscripciones';
+
+  const AREAS = {
+    '1': {
+      nombre: 'Área 1 — Matemática',
+      tarea: 'https://forms.gle/ZMJWpmY71m2FHPkr8'
+    },
+    '2': {
+      nombre: 'Área 2 — Comunicación',
+      tarea: 'https://forms.gle/AZsh34kxFvY8nc1A6'
+    },
+    '3': {
+      nombre: 'Área 3 — CTA',
+      tarea: 'https://forms.gle/4ZHZtPv1kGmczMx39'
+    },
+    '4': {
+      nombre: 'Área 4 — Sociales',
+      tarea: 'https://forms.gle/5zw9TdURHCeEjFhTA'
+    }
+  };
+
+  async function buscarPorDNI(e) {
+    e.preventDefault();
+
+    const dni = document.getElementById('inputDNI').value.trim();
+    const btnBuscar = document.getElementById('btnBuscar');
+    const iconBuscar = document.getElementById('iconBuscar');
+    const mensajeError = document.getElementById('mensajeError');
+    const resultado = document.getElementById('resultado');
+
+    // Resetear
+    mensajeError.classList.add('hidden');
+    resultado.classList.add('hidden');
+
+    // Loading
+    btnBuscar.disabled = true;
+    iconBuscar.classList.add('animate-spin');
+
+    try {
+      // Buscar en ambos endpoints
+      const [resListado, resInscripciones] = await Promise.all([
+        fetch(API_LISTADO),
+        fetch(API_INSCRIPCIONES)
+      ]);
+
+      if (!resListado.ok || !resInscripciones.ok) {
+        throw new Error('Error al consultar los datos');
+      }
+
+      const dataListado = await resListado.json();
+      const dataInscripciones = await resInscripciones.json();
+
+      // Buscar en listado de inscritos
+      const inscrito = (dataListado.listado || []).find(
+        item => item.nro_documento === dni
+      );
+
+      // Buscar en inscripciones
+      const inscripcion = (dataInscripciones || []).find(
+        item => item.nro_documento === dni
+      );
+
+      // Verificar si existe en alguno de los dos
+      if (!inscrito && !inscripcion) {
+        mensajeError.textContent = 'No se encontró ninguna inscripción con este DNI.';
+        mensajeError.classList.remove('hidden');
+        return;
+      }
+
+      // Usar datos combinados (prioridad a inscrito del listado)
+      const datos = inscrito || inscripcion;
+      const area = String(datos.area || '1');
+      const areaInfo = AREAS[area] || AREAS['1'];
+
+      // Mostrar resultado
+      const nombreCompleto = `${datos.paterno || ''} ${datos.materno || ''}, ${datos.nombres || datos.nombre || ''}`.trim();
+
+      document.getElementById('resNombre').textContent = nombreCompleto;
+      document.getElementById('resDNI').textContent = datos.nro_documento;
+      document.getElementById('resArea').textContent = areaInfo.nombre;
+      document.getElementById('linkTarea').href = areaInfo.tarea;
+
+      resultado.classList.remove('hidden');
+
+      // Scroll suave al resultado
+      setTimeout(() => {
+        resultado.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+
+    } catch (error) {
+      console.error('Error:', error);
+      mensajeError.textContent = 'Error al buscar los datos. Por favor, intenta nuevamente.';
+      mensajeError.classList.remove('hidden');
+    } finally {
+      btnBuscar.disabled = false;
+      iconBuscar.classList.remove('animate-spin');
+    }
+  }
+
+  // Solo números en el input DNI
+  document.getElementById('inputDNI').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+  });
+</script>
+</body>
+</html>
