@@ -132,6 +132,17 @@
             </a>
           </div>
 
+          <!-- Materiales del Curso -->
+          <div id="contenedorMateriales" class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 hidden">
+            <h3 class="text-sm font-semibold text-purple-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+              Materiales del Curso
+            </h3>
+            <div id="listaMateriales" class="space-y-2"></div>
+          </div>
+
         </div>
       </div>
 
@@ -151,19 +162,27 @@
   const AREAS = {
     '1': {
       nombre: 'Área 1 — Matemática',
-      tarea: 'https://forms.gle/ZMJWpmY71m2FHPkr8'
+      tarea: 'https://forms.gle/ZMJWpmY71m2FHPkr8',
+      materiales: [
+        { nombre: 'Formato Item Puno', archivo: 'formato_item_puno.docx', tipo: 'docx' },
+        { nombre: 'Item por Competencia', archivo: 'item_por_competencia.pptx', tipo: 'pptx' },
+        { nombre: 'Seminario Taller - Matemáticas Parte 2', archivo: 'Seminario_Taller_por_areas_Matematicas_Parte_2.pptx', tipo: 'pptx' }
+      ]
     },
     '2': {
       nombre: 'Área 2 — Comunicación',
-      tarea: 'https://forms.gle/AZsh34kxFvY8nc1A6'
+      tarea: 'https://forms.gle/AZsh34kxFvY8nc1A6',
+      materiales: []
     },
     '3': {
       nombre: 'Área 3 — CTA',
-      tarea: 'https://forms.gle/4ZHZtPv1kGmczMx39'
+      tarea: 'https://forms.gle/4ZHZtPv1kGmczMx39',
+      materiales: []
     },
     '4': {
       nombre: 'Área 4 — Sociales',
-      tarea: 'https://forms.gle/5zw9TdURHCeEjFhTA'
+      tarea: 'https://forms.gle/5zw9TdURHCeEjFhTA',
+      materiales: []
     }
   };
 
@@ -227,6 +246,37 @@
       document.getElementById('resDNI').textContent = datos.nro_documento;
       document.getElementById('resArea').textContent = areaInfo.nombre;
       document.getElementById('linkTarea').href = areaInfo.tarea;
+
+      // Mostrar materiales si existen para el área
+      const contenedorMateriales = document.getElementById('contenedorMateriales');
+      const listaMateriales = document.getElementById('listaMateriales');
+
+      if (areaInfo.materiales && areaInfo.materiales.length > 0) {
+        listaMateriales.innerHTML = '';
+        areaInfo.materiales.forEach(material => {
+          const iconoTipo = material.tipo === 'docx'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>';
+
+          const itemHtml = `
+            <a href="./materiales/area-${area}/${material.archivo}" target="_blank" download
+               class="flex items-center gap-3 bg-white hover:bg-purple-50 border border-purple-100 rounded-lg p-3 transition group">
+              <div class="shrink-0">${iconoTipo}</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">${material.nombre}</p>
+                <p class="text-xs text-gray-500">.${material.tipo}</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+            </a>`;
+
+          listaMateriales.innerHTML += itemHtml;
+        });
+        contenedorMateriales.classList.remove('hidden');
+      } else {
+        contenedorMateriales.classList.add('hidden');
+      }
 
       resultado.classList.remove('hidden');
 
