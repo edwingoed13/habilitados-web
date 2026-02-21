@@ -23,6 +23,10 @@
     {
       "src": "extemporaneo/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "salas/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -49,6 +53,10 @@
     {
       "src": "/extemporaneo/?",
       "dest": "/extemporaneo/index.html"
+    },
+    {
+      "src": "/salas/?",
+      "dest": "/salas/index.html"
     }
   ]
 }
