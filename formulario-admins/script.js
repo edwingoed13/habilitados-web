@@ -156,7 +156,7 @@ function mostrarImagenExistente(imageUrl) {
         // Usar el sistema de iframe para Google Drive
         existingImageContainer.innerHTML = `
             <div class="existing-image-header">
-                <strong>📷 Foto actual registrada</strong>
+                <strong>Foto actual registrada</strong>
                 <button type="button" class="btn-remove-preview" onclick="ocultarImagenExistente()">×</button>
             </div>
             <div class="photo-preview-container">
@@ -179,10 +179,10 @@ function mostrarImagenExistente(imageUrl) {
             <div class="photo-actions" style="text-align: center; margin-top: 10px;">
                 <button type="button" class="btn-view-photo" onclick="window.open('${imageUrl}', '_blank')" 
                         style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    👁️ Ver Foto Original
+                    Ver Foto Original
                 </button>
             </div>
-            <p class="update-note"><small>💡 Puede subir una nueva imagen para reemplazar la actual</small></p>
+            <p class="update-note"><small>Puede subir una nueva imagen para reemplazar la actual</small></p>
         `;
         
         // Después de insertar, configurar el iframe
@@ -231,7 +231,7 @@ function mostrarImagenExistente(imageUrl) {
         // Para URLs normales, usar imagen directa
         existingImageContainer.innerHTML = `
             <div class="existing-image-header">
-                <strong>📷 Foto actual registrada</strong>
+                <strong>Foto actual registrada</strong>
                 <button type="button" class="btn-remove-preview" onclick="ocultarImagenExistente()">×</button>
             </div>
             <div class="image-container" style="text-align: center;">
@@ -245,10 +245,10 @@ function mostrarImagenExistente(imageUrl) {
             <div class="photo-actions" style="text-align: center; margin-top: 10px;">
                 <button type="button" class="btn-view-photo" onclick="window.open('${imageUrl}', '_blank')"
                         style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    👁️ Ver Foto Original
+                    Ver Foto Original
                 </button>
             </div>
-            <p class="update-note"><small>💡 Puede subir una nueva imagen para reemplazar la actual</small></p>
+            <p class="update-note"><small>Puede subir una nueva imagen para reemplazar la actual</small></p>
         `;
         
         // Configurar la imagen después de insertar
@@ -415,7 +415,7 @@ function validarDNI(dni) {
             
             if (!result.success && result.error === 'DNI_ALREADY_EXISTS') {
                 statusElement.innerHTML = `
-                    <div>✏️ ${result.message}</div>
+                    <div>${result.message}</div>
                     <div style="margin-top: 5px;">
                         <button id="btn-cargar-datos" onclick="cargarDatosExistentes()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
                             Cargar Datos
@@ -432,7 +432,7 @@ function validarDNI(dni) {
                 existingUserData = result.existingData;
                 resolve(false);
             } else if (result.success) {
-                statusElement.textContent = '✅ DNI disponible';
+                statusElement.textContent = 'DNI disponible';
                 statusElement.className = 'dni-status disponible';
                 errorElement.textContent = '';
                 isUpdateMode = false;
@@ -580,40 +580,63 @@ function cargarDatosExistentes() {
     
     // Actualizar el estado visual
     const statusElement = document.getElementById('dni-status');
-    statusElement.innerHTML = '📝 Modo actualización - Puede modificar y enviar';
+    statusElement.innerHTML = 'Modo actualización - Puede modificar y enviar';
     statusElement.className = 'dni-status actualizando';
     
     // Cambiar texto del botón
     const submitBtn = document.querySelector('button[type="submit"]');
     submitBtn.textContent = 'Actualizar Registro';
     
-    // Actualizar texto de la foto para que sea opcional
-    const fotoLabel = document.querySelector('label[for="foto"]');
-    if (fotoLabel) {
-        fotoLabel.innerHTML = `Foto personal para credencial <span style="color: #28a745; font-size: 12px;">(Opcional - Solo si desea cambiar la foto actual)</span>`;
+    // Actualizar sección de foto
+    const photoTitle = document.getElementById('photo-section-title');
+    if (photoTitle) {
+        photoTitle.innerHTML = 'Actualizar Foto <span class="text-sm text-gray-500 font-normal">(Opcional)</span>';
     }
-    
+
     // IMPORTANTE: Quitar el atributo required del campo foto
     const fotoInput = document.getElementById('foto');
     if (fotoInput) {
         fotoInput.removeAttribute('required');
     }
-    
-    // Actualizar el texto del área de subida de archivo
-    const fileUploadText = document.querySelector('.file-upload-btn p');
-    if (fileUploadText) {
-        fileUploadText.textContent = 'Haz clic solo si deseas cambiar tu foto';
+
+    // Actualizar textos del área de carga
+    const uploadText = document.getElementById('upload-text');
+    if (uploadText) {
+        uploadText.textContent = 'Haz clic para cambiar tu foto';
     }
-    
-    // Actualizar el texto pequeño
-    const fileUploadSmall = document.querySelector('.file-upload-btn small');
-    if (fileUploadSmall) {
-        fileUploadSmall.innerHTML = 'Opcional: JPG, PNG (Máx. 2MB)<br><em>Si no seleccionas nada, se mantendrá tu foto actual</em>';
+
+    const uploadHint = document.getElementById('upload-hint');
+    if (uploadHint) {
+        uploadHint.innerHTML = 'Opcional - Solo si deseas actualizar la foto actual';
     }
-    
-    // Mostrar vista previa de la foto existente si existe
+
+    // Mostrar foto existente si existe
     if (data.fotoUrl && data.fotoUrl.trim() !== '') {
-        mostrarImagenExistente(data.fotoUrl);
+        const existingPhotoContainer = document.getElementById('existing-photo-container');
+        const currentPhoto = document.getElementById('current-photo');
+
+        if (existingPhotoContainer && currentPhoto) {
+            existingPhotoContainer.classList.remove('hidden');
+
+            // Manejar URLs de Google Drive
+            if (data.fotoUrl.includes('drive.google.com')) {
+                const fileId = data.fotoUrl.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+                if (fileId) {
+                    currentPhoto.src = `https://drive.google.com/thumbnail?id=${fileId[1]}&sz=w400`;
+                }
+            } else {
+                currentPhoto.src = data.fotoUrl;
+            }
+
+            // Manejar error de carga de imagen
+            currentPhoto.onerror = function() {
+                this.style.display = 'none';
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'text-sm text-gray-500 text-center';
+                errorMsg.textContent = 'No se pudo cargar la imagen actual';
+                this.parentNode.insertBefore(errorMsg, this.nextSibling);
+            };
+        }
     }
     
     mostrarMensaje('exito', 'Datos cargados para actualización. Puede modificar los campos necesarios.');
@@ -750,7 +773,7 @@ function mostrarModalConfirmacionTallas(tallaCasaca, tallaPantalon, callback) {
                         <span class="talla-value">${tallaPantalon.replace('P-', '')}</span>
                     </div>
                 </div>
-                <p class="modal-note">⚠️ Es importante verificar sus tallas antes de confirmar</p>
+                <p class="modal-note">Es importante verificar sus tallas antes de confirmar</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-modal btn-cancel" onclick="cerrarModalTallas()">Modificar</button>
@@ -1303,7 +1326,7 @@ function verificarDNIInicial(dni) {
             return;
         }
         
-        statusElement.innerHTML = '<div style="color: #3498db;">🔍 Verificando DNI...</div>';
+        statusElement.innerHTML = '<div style="color: #3498db;">Verificando DNI...</div>';
         
         // Crear callback único
         const callbackName = 'verifyCallback' + Date.now();
@@ -1391,7 +1414,7 @@ function mostrarUsuarioExistente(userData) {
                 </div>
                 <div class="photo-actions">
                     <button type="button" class="btn-view-photo" onclick="window.open('${userData.fotoUrl}', '_blank')">
-                        👁️ Ver Foto Original
+                        Ver Foto Original
                     </button>
                 </div>
             `;
@@ -1465,7 +1488,7 @@ function mostrarUsuarioExistente(userData) {
         // Mostrar placeholder si no hay foto
         const placeholder = document.createElement('div');
         placeholder.className = 'photo-placeholder';
-        placeholder.innerHTML = '📷 Sin foto registrada';
+        placeholder.innerHTML = 'Sin foto registrada';
         placeholder.style.cssText = `
             width: 150px; 
             height: 150px; 
