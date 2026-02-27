@@ -127,11 +127,8 @@
         // Función para cargar datos
         async function cargarDatos() {
             try {
-                // Detectar si estamos en desarrollo local o producción
-                const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                    ? 'http://localhost:3000'
-                    : '';
-                const response = await fetch(`${baseUrl}/api/docentes/estadisticas`);
+                // Usar la ruta correcta para el endpoint
+                const response = await fetch('/docentes-pre/api/docentes/estadisticas');
                 const data = await response.json();
 
                 // Actualizar total de inscritos
