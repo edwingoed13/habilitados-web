@@ -25,6 +25,7 @@ function actualizarTallas() {
     const pantalonSelect = document.getElementById('talla_pantalon');
     const guiaFemenino = document.getElementById('guia-femenino');
     const guiaMasculino = document.getElementById('guia-masculino');
+    const tallasTitle = document.getElementById('tallas-title');
 
     // Limpiar selects
     casacaSelect.innerHTML = '<option value="">Seleccione su talla</option>';
@@ -35,6 +36,11 @@ function actualizarTallas() {
     guiaMasculino.style.display = 'none';
 
     if (sexo === 'F') {
+        // Actualizar título para mujer
+        if (tallasTitle) {
+            tallasTitle.textContent = 'Tallas de Vestimenta (MUJER)';
+        }
+
         // Llenar opciones para femenino
         tallas.femenino.casaca.forEach(talla => {
             casacaSelect.innerHTML += `<option value="C-${talla}">${talla}</option>`;
@@ -44,6 +50,11 @@ function actualizarTallas() {
         });
         guiaFemenino.style.display = 'block';
     } else if (sexo === 'M') {
+        // Actualizar título para varón
+        if (tallasTitle) {
+            tallasTitle.textContent = 'Tallas de Vestimenta (VARÓN)';
+        }
+
         // Llenar opciones para masculino
         tallas.masculino.casaca.forEach(talla => {
             casacaSelect.innerHTML += `<option value="C-${talla}">${talla}</option>`;
@@ -52,6 +63,11 @@ function actualizarTallas() {
             pantalonSelect.innerHTML += `<option value="P-${talla}">${talla}</option>`;
         });
         guiaMasculino.style.display = 'block';
+    } else {
+        // Restaurar título por defecto si no hay sexo seleccionado
+        if (tallasTitle) {
+            tallasTitle.textContent = 'Tallas de Vestimenta';
+        }
     }
 }
 
