@@ -109,10 +109,24 @@
             try {
                 // Usar la ruta correcta para el endpoint
                 const response = await fetch('/docentes-pre/api/docentes/estadisticas');
+
+                if (!response.ok) {
+                    throw new Error('Error al obtener datos del servidor');
+                }
+
                 const data = await response.json();
 
+                // Verificar que los datos existen antes de usarlos
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
                 // Actualizar total de inscritos
-                document.getElementById('totalInscritos').textContent = data.total[0].total;
+                if (data.total && data.total[0]) {
+                    document.getElementById('totalInscritos').textContent = data.total[0].total || 0;
+                } else {
+                    document.getElementById('totalInscritos').textContent = '0';
+                }
 
                 // Procesar datos por área
                 if (data.porArea && data.porArea.length > 0) {
@@ -147,6 +161,11 @@
 
                     // Actualizar gráfico de dona
                     actualizarGraficoDona(labels, valores, colores);
+                } else {
+                    // Si no hay datos de áreas
+                    document.getElementById('areaMasPopular').textContent = 'Sin datos';
+                    document.getElementById('areaMasPopularCount').textContent = '0 inscritos';
+                    document.getElementById('totalAreas').textContent = '0';
                 }
 
             } catch (error) {
