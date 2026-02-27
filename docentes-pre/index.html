@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Inscripciones Docentes Pre</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold">Dashboard de Inscripciones - Docentes Pre</h1>
+            <p class="text-blue-100 mt-2">Monitoreo en tiempo real de inscripciones por área</p>
+        </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Inscritos -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Total Inscritos</p>
+                        <p id="totalInscritos" class="text-3xl font-bold text-gray-800">-</p>
+                    </div>
+                    <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Área con más inscritos -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Área Más Popular</p>
+                        <p id="areaMasPopular" class="text-xl font-bold text-gray-800">-</p>
+                        <p id="areaMasPopularCount" class="text-sm text-gray-500">-</p>
+                    </div>
+                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Total de Áreas -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Total de Áreas</p>
+                        <p id="totalAreas" class="text-3xl font-bold text-gray-800">-</p>
+                    </div>
+                    <svg class="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Gráfico de Barras -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Inscripciones por Área</h2>
+                <div class="chart-container">
+                    <canvas id="chartBarras"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Dona -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Distribución Porcentual</h2>
+                <div class="chart-container">
+                    <canvas id="chartDona"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de últimos inscritos -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Últimas 10 Inscripciones</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Docente</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Área</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Fecha Inscripción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUltimosInscritos" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-gray-500">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Botón de actualizar -->
+        <div class="mt-8 text-center">
+            <button onclick="cargarDatos()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 transform hover:scale-105">
+                Actualizar Datos
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let chartBarras = null;
+        let chartDona = null;
+
+        // Función para cargar datos
+        async function cargarDatos() {
+            try {
+                // Detectar si estamos en desarrollo local o producción
+                const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3000'
+                    : '';
+                const response = await fetch(`${baseUrl}/api/docentes/estadisticas`);
+                const data = await response.json();
+
+                // Actualizar total de inscritos
+                document.getElementById('totalInscritos').textContent = data.total[0].total;
+
+                // Procesar datos por área
+                if (data.porArea && data.porArea.length > 0) {
+                    // Actualizar área más popular
+                    const areaMasPopular = data.porArea[0];
+                    document.getElementById('areaMasPopular').textContent = areaMasPopular.area || 'Sin área';
+                    document.getElementById('areaMasPopularCount').textContent = `${areaMasPopular.total} inscritos`;
+
+                    // Actualizar total de áreas
+                    document.getElementById('totalAreas').textContent = data.porArea.length;
+
+                    // Preparar datos para los gráficos
+                    const labels = data.porArea.map(item => item.area || 'Sin área');
+                    const valores = data.porArea.map(item => item.total);
+
+                    // Colores para los gráficos
+                    const colores = [
+                        'rgba(59, 130, 246, 0.8)',   // blue-500
+                        'rgba(16, 185, 129, 0.8)',   // green-500
+                        'rgba(239, 68, 68, 0.8)',    // red-500
+                        'rgba(245, 158, 11, 0.8)',   // yellow-500
+                        'rgba(139, 92, 246, 0.8)',   // purple-500
+                        'rgba(236, 72, 153, 0.8)',   // pink-500
+                        'rgba(99, 102, 241, 0.8)',   // indigo-500
+                        'rgba(14, 165, 233, 0.8)',   // sky-500
+                        'rgba(168, 85, 247, 0.8)',   // violet-500
+                        'rgba(251, 146, 60, 0.8)'    // orange-500
+                    ];
+
+                    // Actualizar gráfico de barras
+                    actualizarGraficoBarras(labels, valores, colores);
+
+                    // Actualizar gráfico de dona
+                    actualizarGraficoDona(labels, valores, colores);
+                }
+
+                // Actualizar tabla de últimos inscritos
+                actualizarTablaUltimos(data.ultimos);
+
+            } catch (error) {
+                console.error('Error al cargar datos:', error);
+                alert('Error al cargar los datos. Por favor, intente nuevamente.');
+            }
+        }
+
+        function actualizarGraficoBarras(labels, valores, colores) {
+            const ctx = document.getElementById('chartBarras').getContext('2d');
+
+            if (chartBarras) {
+                chartBarras.destroy();
+            }
+
+            chartBarras = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de Inscritos',
+                        data: valores,
+                        backgroundColor: colores,
+                        borderColor: colores.map(c => c.replace('0.8', '1')),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function actualizarGraficoDona(labels, valores, colores) {
+            const ctx = document.getElementById('chartDona').getContext('2d');
+
+            if (chartDona) {
+                chartDona.destroy();
+            }
+
+            chartDona = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: colores,
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const porcentaje = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw} (${porcentaje}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function actualizarTablaUltimos(ultimos) {
+            const tabla = document.getElementById('tablaUltimosInscritos');
+
+            if (!ultimos || ultimos.length === 0) {
+                tabla.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-gray-500">No hay inscripciones registradas</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tabla.innerHTML = ultimos.map(inscrito => {
+                const nombreCompleto = `${inscrito.nombres} ${inscrito.apellido_paterno} ${inscrito.apellido_materno || ''}`.trim();
+                const fecha = new Date(inscrito.fecha_inscripcion);
+                const fechaFormateada = fecha.toLocaleDateString('es-PE', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-700">${nombreCompleto}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                ${inscrito.area || 'Sin área'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${fechaFormateada}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', cargarDatos);
+
+        // Actualizar cada 30 segundos
+        setInterval(cargarDatos, 30000);
+    </script>
+</body>
+</html>
