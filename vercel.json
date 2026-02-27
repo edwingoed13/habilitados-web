@@ -31,6 +31,10 @@
     {
       "src": "docentes-pre/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "formulario-admins/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -69,6 +73,10 @@
     {
       "src": "/docentes-pre/api/(.*)",
       "dest": "server.js"
+    },
+    {
+      "src": "/formulario-admins/?",
+      "dest": "/formulario-admins/index.html"
     }
   ]
 }

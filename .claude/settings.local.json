@@ -19,7 +19,13 @@
       "Bash(git add -A)",
       "Bash(git commit -m \"$(cat <<''EOF''\nFix: Integrar docentes-pre como subcarpeta en proyecto principal\n\n- Eliminar server.js y package.json de docentes-pre (no necesarios)\n- Eliminar vercel.json de subcarpeta\n- Agregar endpoints /docentes-pre/api/* al server.js principal\n- Actualizar vercel.json principal con rutas para docentes-pre\n- Actualizar HTML para usar ruta /docentes-pre/api/docentes/estadisticas\n- Ahora accesible en https://habilitados-web.vercel.app/docentes-pre\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"Fix: Eliminar datos de ejemplo y sección últimas inscripciones\n\n- Quitar tabla de últimas 10 inscripciones del dashboard\n- Eliminar datos de ejemplo del endpoint (ahora retorna error real)\n- Simplificar endpoint para solo mostrar total y por área\n- Esto permite conectar directamente con la BD real en producción\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
-      "Bash(git commit -m \"Fix: Mejorar manejo de errores en dashboard docentes-pre\n\n- Agregar validación de respuesta del servidor\n- Verificar existencia de datos antes de usarlos\n- Manejar casos donde no hay datos de áreas\n- Mostrar valores por defecto cuando no hay datos\n- Prevenir error ''Cannot read properties of undefined''\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
+      "Bash(git commit -m \"Fix: Mejorar manejo de errores en dashboard docentes-pre\n\n- Agregar validación de respuesta del servidor\n- Verificar existencia de datos antes de usarlos\n- Manejar casos donde no hay datos de áreas\n- Mostrar valores por defecto cuando no hay datos\n- Prevenir error ''Cannot read properties of undefined''\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(curl -s http://localhost:3000/docentes-pre/api/docentes/estadisticas)",
+      "Bash(python -m json.tool)",
+      "Bash(npm start)",
+      "Bash(curl -s https://habilitados-web.vercel.app/docentes-pre/api/docentes/estadisticas)",
+      "Bash(git commit -m \"Fix: Corregir nombre de columna en consultas de docentes-pre\n\n- Cambiar ''nombre_area'' por ''denominacion'' en tabla areas\n- Corregir ambos endpoints que consultaban áreas\n- Soluciona error: Unknown column ''a.nombre_area''\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git clone https://github.com/edwingoed13/formulario-admins.git formulario-admins)"
     ],
     "deny": [],
     "ask": []
