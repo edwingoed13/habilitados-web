@@ -1224,11 +1224,11 @@ app.get('/docentes-pre/api/docentes/estadisticas', async (req, res) => {
     // Inscritos por área
     const [porAreaResult] = await connection.query(`
       SELECT
-        a.nombre_area as area,
+        a.denominacion as area,
         COUNT(id.id) as total
       FROM inscripcion_docentes id
       LEFT JOIN areas a ON id.areas_id = a.id
-      GROUP BY id.areas_id, a.nombre_area
+      GROUP BY id.areas_id, a.denominacion
       ORDER BY total DESC
     `);
 
@@ -1264,7 +1264,7 @@ app.get('/docentes-pre/api/docentes/area/:areaId', async (req, res) => {
         d.apellido_materno,
         d.celular,
         d.correo,
-        a.nombre_area as area,
+        a.denominacion as area,
         id.created_at as fecha_inscripcion
       FROM inscripcion_docentes id
       LEFT JOIN docentes d ON id.docentes_id = d.id
