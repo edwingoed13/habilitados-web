@@ -16,7 +16,8 @@
       "Bash(git add docentes-pre/)",
       "Bash(git commit -m \"$(cat <<''EOF''\nFeature: Agregar dashboard docentes-pre para monitoreo de inscripciones\n\n- Crear sistema completo de visualización de inscripciones docentes\n- Dashboard con estadísticas en tiempo real (total, área más popular)\n- Gráficos interactivos con Chart.js (barras y dona)\n- Tabla de últimas 10 inscripciones\n- API endpoints para consultar datos de inscripción_docentes\n- Modo desarrollo con datos de ejemplo cuando no hay conexión DB\n- Configuración para despliegue en Vercel\n- Actualización automática cada 30 segundos\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push origin main)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Integrar docentes-pre como subcarpeta en proyecto principal\n\n- Eliminar server.js y package.json de docentes-pre (no necesarios)\n- Eliminar vercel.json de subcarpeta\n- Agregar endpoints /docentes-pre/api/* al server.js principal\n- Actualizar vercel.json principal con rutas para docentes-pre\n- Actualizar HTML para usar ruta /docentes-pre/api/docentes/estadisticas\n- Ahora accesible en https://habilitados-web.vercel.app/docentes-pre\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

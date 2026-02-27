@@ -91,26 +91,6 @@
             </div>
         </div>
 
-        <!-- Tabla de últimos inscritos -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Últimas 10 Inscripciones</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full table-auto">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Docente</th>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Área</th>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Fecha Inscripción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaUltimosInscritos" class="divide-y divide-gray-200">
-                        <tr>
-                            <td colspan="3" class="text-center py-4 text-gray-500">Cargando...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
         <!-- Botón de actualizar -->
         <div class="mt-8 text-center">
@@ -168,9 +148,6 @@
                     // Actualizar gráfico de dona
                     actualizarGraficoDona(labels, valores, colores);
                 }
-
-                // Actualizar tabla de últimos inscritos
-                actualizarTablaUltimos(data.ultimos);
 
             } catch (error) {
                 console.error('Error al cargar datos:', error);
@@ -266,43 +243,6 @@
                     }
                 }
             });
-        }
-
-        function actualizarTablaUltimos(ultimos) {
-            const tabla = document.getElementById('tablaUltimosInscritos');
-
-            if (!ultimos || ultimos.length === 0) {
-                tabla.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="text-center py-4 text-gray-500">No hay inscripciones registradas</td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tabla.innerHTML = ultimos.map(inscrito => {
-                const nombreCompleto = `${inscrito.nombres} ${inscrito.apellido_paterno} ${inscrito.apellido_materno || ''}`.trim();
-                const fecha = new Date(inscrito.fecha_inscripcion);
-                const fechaFormateada = fecha.toLocaleDateString('es-PE', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-700">${nombreCompleto}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                ${inscrito.area || 'Sin área'}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-500">${fechaFormateada}</td>
-                    </tr>
-                `;
-            }).join('');
         }
 
         // Cargar datos al iniciar

@@ -1232,64 +1232,21 @@ app.get('/docentes-pre/api/docentes/estadisticas', async (req, res) => {
       ORDER BY total DESC
     `);
 
-    // Últimos 10 inscritos
-    const [ultimosResult] = await connection.query(`
-      SELECT
-        d.nombres,
-        d.apellido_paterno,
-        d.apellido_materno,
-        a.nombre_area as area,
-        id.created_at as fecha_inscripcion
-      FROM inscripcion_docentes id
-      LEFT JOIN docentes d ON id.docentes_id = d.id
-      LEFT JOIN areas a ON id.areas_id = a.id
-      ORDER BY id.created_at DESC
-      LIMIT 10
-    `);
-
     connection.release();
 
     const results = {
       total: totalResult,
-      porArea: porAreaResult,
-      ultimos: ultimosResult
+      porArea: porAreaResult
     };
 
     res.json(results);
 
   } catch (error) {
     console.error('Error en consulta docentes:', error);
-
-    // Enviar datos de ejemplo en caso de error
-    const ejemploDatos = {
-      total: [{ total: 245 }],
-      porArea: [
-        { area: 'Matemática', total: 65 },
-        { area: 'Comunicación', total: 52 },
-        { area: 'Ciencias Sociales', total: 38 },
-        { area: 'Ciencia y Tecnología', total: 35 },
-        { area: 'Educación Física', total: 28 },
-        { area: 'Arte y Cultura', total: 27 }
-      ],
-      ultimos: [
-        {
-          nombres: 'Juan Carlos',
-          apellido_paterno: 'Pérez',
-          apellido_materno: 'García',
-          area: 'Matemática',
-          fecha_inscripcion: new Date('2024-02-26T10:30:00')
-        },
-        {
-          nombres: 'María Isabel',
-          apellido_paterno: 'Rodríguez',
-          apellido_materno: 'López',
-          area: 'Comunicación',
-          fecha_inscripcion: new Date('2024-02-26T09:15:00')
-        }
-      ]
-    };
-
-    res.json(ejemploDatos);
+    res.status(500).json({
+      error: 'Error al obtener datos de inscripciones de docentes',
+      message: error.message
+    });
   }
 });
 
